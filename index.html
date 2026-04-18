@@ -1,0 +1,2011 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VertiBand · Precision vestibular therapy at home</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A home wearable that verifies each stage of the Epley maneuver in real time. 1.9° mean angle error, 100 Hz IMU tracking, one-time purchase.">
+<meta name="theme-color" content="#F7F1E8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="VertiBand · Precision vestibular therapy at home">
+<meta property="og:description" content="Stop guessing. Start healing. VertiBand watches your head while you do the Epley maneuver and tells you when you got it right.">
+<meta property="og:image" content="assets/hero-lifestyle.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VertiBand · Precision vestibular therapy at home">
+<meta name="twitter:description" content="Stop guessing. Start healing. 1.9° mean angle error. $219 once. 10-year warranty.">
+<meta name="twitter:image" content="assets/hero-lifestyle.png">
+<link rel="icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="%231D2C38"/><text x="50%25" y="56%25" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-style="italic" font-weight="500" font-size="40" fill="%23F7F1E8">V</text></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.16/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--fg-1); font-family: var(--body); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  /* ────────── RAIL ────────── */
+  .rail {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 72px; z-index: 50;
+    border-right: 1px solid var(--hair);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 24px 0; background: var(--paper);
+  }
+  .rail .mark {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display); font-weight: 500; font-size: 18px;
+    font-style: italic; letter-spacing: -0.02em;
+  }
+  .rail .idx { display: flex; flex-direction: column; gap: 24px; align-items: center; }
+  .rail .idx a {
+    font: 500 10px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-3);
+    writing-mode: vertical-rl; transform: rotate(180deg);
+  }
+  .rail .idx a { cursor: pointer; transition: color 300ms var(--ease); position: relative; padding: 4px 2px; }
+  .rail .idx a:hover, .rail .idx a.on { color: var(--ink); }
+  .rail .idx a.on::before { content: ""; position: absolute; left: -10px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--signal); }
+  .rail .foot { font: 500 10px/1.4 var(--mono); letter-spacing: 0.1em; color: var(--fg-3); text-align: center; }
+
+  .page { margin-left: 72px; }
+
+  /* reveal-on-scroll (default visible; JS adds .pre to hide before reveal) */
+  .reveal { transition: opacity 900ms var(--ease), transform 900ms var(--ease); }
+  .reveal.pre { opacity: 0; transform: translateY(24px); }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal.d1 { transition-delay: 80ms; }
+  .reveal.d2 { transition-delay: 160ms; }
+  .reveal.d3 { transition-delay: 240ms; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+  /* ────────── BAR — clean, no fake urgency ────────── */
+  .bar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(247,241,232,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--hair);
+    font: 500 12px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-3);
+  }
+  .bar .word { font-family: var(--display); font-weight: 400; font-style: italic; font-size: 22px; color: var(--ink); letter-spacing: -0.015em; text-transform: none; }
+  .bar .word b { font-style: normal; font-weight: 500; }
+  .bar .right-group { display: flex; gap: 32px; align-items: center; }
+  .bar a.link { color: var(--fg-2); letter-spacing: 0.1em; }
+  .bar a.link:hover { color: var(--ink); }
+  .bar a.cta {
+    color: var(--paper); background: var(--ink);
+    padding: 10px 18px; border-radius: 999px; letter-spacing: 0.1em;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background 200ms var(--ease);
+  }
+  .bar a.cta:hover { background: var(--signal); }
+
+  .wrap { padding: 0 clamp(32px, 6vw, 88px); }
+
+  /* ────────── HERO — Halo-style: giant serif, softly blurred product, muted readouts ────────── */
+  .hero { padding: 72px 0 0; border-bottom: 1px solid var(--hair); }
+  .hero .grid { display: grid; grid-template-columns: 1fr 1fr; min-height: 84vh; align-items: stretch; }
+  .hero .left {
+    padding: 0 clamp(32px, 5vw, 72px) 72px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .hero .kicker {
+    font: 500 11px/1 var(--mono); letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg-3);
+    margin-bottom: 36px; display: inline-flex; align-items: center; gap: 12px;
+  }
+  .hero .kicker::before {
+    content: ""; width: 24px; height: 1px; background: var(--signal);
+  }
+  .hero h1 {
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(52px, 5.8vw, 104px); line-height: 1.12; letter-spacing: -0.03em;
+    margin: 0 0 48px; color: var(--ink);
+  }
+  .hero h1 i { font-style: italic; font-weight: 400; color: var(--ink-2); }
+  .hero h1 .accent { color: var(--signal); font-style: italic; font-weight: 400; }
+  .hero .lede {
+    font-size: 17px; line-height: 1.6; color: var(--fg-2); max-width: 460px; margin: 0 0 40px;
+  }
+  .hero .cta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 44px; }
+  .btn {
+    padding: 15px 26px; border-radius: 999px;
+    font: 500 14px/1 var(--body); letter-spacing: 0.02em;
+    cursor: pointer; border: 1px solid transparent;
+    transition: all 220ms var(--ease);
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn.primary:hover { background: var(--signal); border-color: var(--signal); }
+  .btn.ghost {
+    background: transparent; color: var(--ink); border-color: var(--hair-2);
+  }
+  .btn.ghost:hover { border-color: var(--ink); }
+  .hero .price {
+    font: 400 14px/1.4 var(--body); color: var(--fg-3);
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .hero .price b {
+    color: var(--ink); font-weight: 400; font-size: 26px;
+    font-family: var(--display); letter-spacing: -0.01em;
+  }
+
+  /* Hero media — the photo sits inside a warm ink frame with Halo-style caption slab */
+  .hero .right {
+    position: relative; background: var(--ink);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    padding: 64px;
+  }
+  .hero .stage {
+    position: relative; width: 100%; aspect-ratio: 4 / 5;
+    border-radius: 18px; overflow: hidden;
+    background:
+      radial-gradient(ellipse at 30% 30%, rgba(247,241,232,0.08), transparent 60%),
+      radial-gradient(ellipse at 70% 70%, var(--signal-soft), transparent 65%),
+      linear-gradient(160deg, #2F4050 0%, #1A2832 100%);
+  }
+  .hero .stage img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; padding: 12%;
+    filter: drop-shadow(0 40px 60px rgba(0,0,0,0.45));
+    mix-blend-mode: screen;
+    opacity: 0.95;
+  }
+  .hero .stage::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.35));
+  }
+  .hero .caption {
+    position: absolute; bottom: 22px; left: 22px; right: 22px; z-index: 2;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;
+    color: var(--fg-d1); font-family: var(--mono);
+  }
+  .hero .caption .l { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg-d2); line-height: 1.5; }
+  .hero .caption .r {
+    display: flex; gap: 20px;
+  }
+  .hero .caption .r .m { text-align: right; }
+  .hero .caption .r .v {
+    font: 400 26px/1 var(--display); letter-spacing: -0.02em; color: var(--fg-d1);
+    font-variant-numeric: tabular-nums;
+  }
+  .hero .caption .r .k {
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg-d3); margin-top: 4px;
+  }
+
+  /* ────────── TICKER ────────── */
+  .ticker { border-bottom: 1px solid var(--hair); overflow: hidden; background: var(--paper-2); }
+  .ticker .row {
+    display: flex; gap: 64px; padding: 20px 0; white-space: nowrap;
+    font: 500 12px/1 var(--mono); letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg-3);
+    animation: tick 50s linear infinite;
+  }
+  .ticker .row span b { color: var(--ink); font-weight: 500; }
+  @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ────────── EYE + SECTION HEADERS ────────── */
+  .eye {
+    font: 500 11px/1 var(--mono); letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--fg-3); margin-bottom: 36px;
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+  .eye::before { content: ""; width: 24px; height: 1px; background: var(--signal); }
+
+  h2.display {
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(44px, 5.2vw, 88px); line-height: 1.04; letter-spacing: -0.03em;
+    margin: 0; color: var(--ink);
+  }
+  h2.display i { font-style: italic; color: var(--ink-2); font-weight: 400; }
+
+  /* ────────── PROBLEM ────────── */
+  .problem { padding: 160px 0 140px; }
+  .problem .quote {
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(38px, 4.4vw, 72px); line-height: 1.1; letter-spacing: -0.025em;
+    max-width: 1040px; margin: 0 0 112px; color: var(--ink);
+  }
+  .problem .quote i { font-style: italic; color: var(--ink-2); font-weight: 400; }
+  .problem .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px; }
+  .fact { border-top: 1px solid var(--hair-2); padding-top: 28px; }
+  .fact .n { font: 400 60px/1 var(--display); letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .fact .n small { font-size: 22px; color: var(--fg-3); margin-left: 4px; }
+  .fact .k { font: 500 11px/1.4 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); margin-top: 18px; }
+  .fact .d { font-size: 14px; line-height: 1.55; color: var(--fg-2); margin-top: 12px; }
+
+  /* ────────── DEVICE ────────── */
+  .device {
+    background: var(--paper-2); padding: 140px 0;
+    border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+  }
+  .device .grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 80px; align-items: center; }
+  .device .photo {
+    position: relative; aspect-ratio: 4/5;
+    background: var(--paper-3); border-radius: 18px; overflow: hidden;
+  }
+  .device .photo img { width: 100%; height: 100%; object-fit: contain; padding: 10%; }
+  .device .photo .cap {
+    position: absolute; top: 22px; left: 22px;
+    font: 500 10px/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-3);
+  }
+  .device .text h2 { margin: 0 0 24px; }
+  .device .text p { font-size: 17px; line-height: 1.6; color: var(--fg-2); max-width: 460px; margin: 0 0 44px; }
+  .specs { display: grid; gap: 0; border-top: 1px solid var(--hair-2); }
+  .specs .r {
+    display: grid; grid-template-columns: 130px 1fr auto; gap: 24px;
+    padding: 20px 0; border-bottom: 1px solid var(--hair);
+    align-items: baseline;
+  }
+  .specs .r .k { font: 500 11px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-3); }
+  .specs .r .n { font: 400 15.5px/1.4 var(--body); color: var(--ink); }
+  .specs .r .v { font: 500 13px/1 var(--mono); color: var(--signal); }
+
+  /* ────────── LOOP ────────── */
+  .loop { padding: 150px 0 130px; }
+  .loop h2 { margin: 0 0 20px; max-width: 1000px; }
+  .loop .lede { font-size: 17px; line-height: 1.6; color: var(--fg-2); max-width: 640px; margin: 0 0 88px; }
+  .loop .stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--hair-2); }
+  .stage-l { padding: 44px 36px 52px; border-right: 1px solid var(--hair); position: relative; }
+  .stage-l:last-child { border-right: none; }
+  .stage-l .n { font: 500 11px/1 var(--mono); letter-spacing: 0.16em; color: var(--signal); margin-bottom: 24px; }
+  .stage-l h3 { font: 400 30px/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 16px; color: var(--ink); }
+  .stage-l h3 i { font-style: italic; color: var(--ink-2); }
+  .stage-l p { font-size: 14px; line-height: 1.6; color: var(--fg-2); margin: 0; }
+  .stage-l .dot {
+    position: absolute; top: -6px; left: 36px;
+    width: 11px; height: 11px; border-radius: 50%; background: var(--signal);
+  }
+
+  /* ────────── APP ────────── */
+  .appshow {
+    background: var(--ink); color: var(--fg-d1); padding: 140px 0;
+    border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+  }
+  .appshow .eye { color: var(--fg-d3); }
+  .appshow .eye::before { background: var(--signal); }
+  .appshow h2 { color: var(--fg-d1); }
+  .appshow h2 i { color: var(--fg-d2); }
+  .appshow .head { max-width: 860px; margin: 0 0 80px; }
+  .appshow .head p { font-size: 17px; line-height: 1.6; color: var(--fg-d2); margin: 20px 0 0; }
+  .phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; align-items: end; }
+  .phone {
+    aspect-ratio: 390 / 780; background: #000; border-radius: 44px;
+    border: 8px solid #000; overflow: hidden; position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+  }
+  .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .phone .notch {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 28px; background: #000; border-radius: 20px; z-index: 2;
+  }
+  .phone .tag {
+    position: absolute; bottom: 24px; left: 24px; right: 24px; z-index: 3;
+    font: 500 11px/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-d1);
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+    padding: 10px 14px; border-radius: 10px; border: 1px solid var(--hair-d2);
+  }
+  .phone.ghost {
+    background: linear-gradient(180deg, #243443, #1A2832);
+    display: grid; place-items: center;
+    color: var(--fg-d3); text-align: center;
+  }
+  .phone.ghost .msg { font: 500 10px/1.4 var(--mono); letter-spacing: 0.14em; padding: 0 24px; }
+
+  /* ────────── VALIDATION ────────── */
+  .valid { padding: 150px 0 130px; }
+  .valid h2 { margin: 0 0 80px; max-width: 1040px; }
+  .valid .list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .card-v {
+    background: var(--paper-2); padding: 40px 34px 44px;
+    display: flex; flex-direction: column; gap: 16px;
+    border: 1px solid var(--hair); border-radius: 14px;
+  }
+  .card-v .k { font: 500 11px/1 var(--mono); letter-spacing: 0.16em; color: var(--signal); text-transform: uppercase; }
+  .card-v h4 { font: 400 22px/1.25 var(--display); margin: 0; letter-spacing: -0.015em; color: var(--ink); }
+  .card-v p { font-size: 14px; line-height: 1.6; color: var(--fg-2); margin: 0; }
+
+  /* ────────── PRICE ────────── */
+  .price-section {
+    padding: 150px 0 130px; background: var(--paper-2);
+    border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+  }
+  .price-section .wrap { display: grid; grid-template-columns: 1.3fr 1fr; gap: 96px; align-items: center; }
+  .price-section h2 {
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(96px, 14vw, 220px); line-height: 0.92; letter-spacing: -0.04em;
+    margin: 0 0 28px; color: var(--ink);
+  }
+  .price-section h2 sup { font-size: 0.28em; vertical-align: 0.7em; color: var(--fg-3); font-weight: 400; margin-right: 8px; }
+  .price-section h2 small {
+    font-size: 0.22em; color: var(--ink-2); font-weight: 300;
+    letter-spacing: 0; margin-left: 14px; font-style: italic;
+  }
+  .price-section .sub { font-size: 17px; line-height: 1.6; color: var(--fg-2); margin: 0 0 44px; max-width: 480px; }
+  .price-section ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+  .price-section ul li {
+    display: grid; grid-template-columns: 20px 1fr; gap: 14px;
+    align-items: baseline; font-size: 15px; color: var(--fg-1);
+  }
+  .price-section ul li::before {
+    content: ""; width: 6px; height: 6px; border-radius: 999px;
+    background: var(--signal); margin-top: 8px;
+  }
+
+  /* ────────── GEMINI PROMPTS ────────── */
+  .gem { padding: 150px 0 130px; background: var(--paper); }
+  .gem .head { max-width: 860px; margin: 0 0 64px; }
+  .gem .head h2 { margin: 0 0 18px; }
+  .gem .head p { font-size: 16px; line-height: 1.6; color: var(--fg-2); margin: 0; }
+  .gem .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .prompt {
+    background: var(--paper-2); border: 1px solid var(--hair); border-radius: 16px;
+    padding: 30px 32px; display: flex; flex-direction: column; gap: 16px;
+  }
+  .prompt .kind {
+    display: inline-flex; align-items: center; gap: 10px;
+    font: 500 10px/1 var(--mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--signal);
+  }
+  .prompt .kind::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); }
+  .prompt h4 { font: 400 22px/1.2 var(--display); margin: 0; letter-spacing: -0.015em; color: var(--ink); }
+  .prompt h4 i { font-style: italic; color: var(--ink-2); }
+  .prompt pre {
+    background: var(--paper); border: 1px solid var(--hair);
+    padding: 18px 20px; border-radius: 10px; overflow-x: auto;
+    font: 400 12.5px/1.65 var(--mono); color: var(--fg-1);
+    white-space: pre-wrap; margin: 0;
+  }
+  .prompt .foot {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .prompt .ref {
+    font: 400 11px/1.4 var(--mono); color: var(--fg-3); letter-spacing: 0.06em;
+  }
+  .prompt .copy {
+    padding: 8px 14px; border-radius: 999px;
+    background: transparent; border: 1px solid var(--hair-2); color: var(--ink);
+    font: 500 11px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
+    transition: all 200ms var(--ease);
+  }
+  .prompt .copy:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ────────── FOOTER ────────── */
+  footer { padding: 96px 0 48px; border-top: 1px solid var(--hair); background: var(--paper); }
+  footer .wrap { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 48px; }
+  footer h5 {
+    font: 500 11px/1 var(--mono); letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--fg-3); margin: 0 0 22px;
+  }
+  footer .word {
+    font-family: var(--display); font-weight: 300;
+    font-size: 48px; letter-spacing: -0.03em; margin: 0 0 16px; color: var(--ink);
+  }
+  footer .word i { font-style: italic; font-weight: 400; color: var(--ink-2); }
+  footer p { font-size: 14px; line-height: 1.6; color: var(--fg-2); margin: 0; max-width: 280px; }
+  footer ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  footer ul a { font-size: 14px; color: var(--fg-2); }
+  footer ul a:hover { color: var(--ink); }
+  footer .meta {
+    margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--hair);
+    display: flex; justify-content: space-between; align-items: center;
+    font: 500 11px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-3);
+  }
+
+  /* ────────── COMPARE ────────── */
+  .compare { padding: 150px 0 130px; background: var(--paper-2); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+  .compare h2 { margin: 0 0 72px; max-width: 1000px; }
+  .compare table { width: 100%; border-collapse: collapse; }
+  .compare th, .compare td {
+    text-align: left; padding: 22px 18px; border-bottom: 1px solid var(--hair);
+    vertical-align: top;
+  }
+  .compare th {
+    font: 500 11px/1 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3);
+    border-bottom: 1px solid var(--hair-2);
+  }
+  .compare th:first-child { width: 28%; }
+  .compare td:first-child { color: var(--fg-2); font-size: 14px; }
+  .compare td.val {
+    font: 400 17px/1.3 var(--display); color: var(--ink); letter-spacing: -0.01em;
+  }
+  .compare td.val.good { color: var(--ink); }
+  .compare td.val.good::before { content: "✓  "; color: var(--signal); font-weight: 500; }
+  .compare td.val.no { color: var(--fg-3); }
+  .compare td.val.no::before { content: "—  "; color: var(--fg-3); }
+  .compare .col-us { background: rgba(200,90,58,0.04); border-left: 1px solid var(--signal-soft); border-right: 1px solid var(--signal-soft); }
+  .compare thead .col-us { border-top: 2px solid var(--signal); }
+
+  /* ────────── TEAM ────────── */
+  .team { padding: 150px 0 130px; }
+  .team h2 { margin: 0 0 24px; max-width: 900px; }
+  .team .lede { font-size: 17px; line-height: 1.6; color: var(--fg-2); max-width: 620px; margin: 0 0 80px; }
+  .team .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 48px; }
+  .teamcard {
+    display: grid; grid-template-columns: 180px 1fr; gap: 32px; align-items: start;
+  }
+  .teamcard .pic {
+    aspect-ratio: 1/1; background: var(--paper-3); border-radius: 14px; overflow: hidden;
+  }
+  .teamcard .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .teamcard h3 { font: 400 28px/1.1 var(--display); letter-spacing: -0.02em; margin: 0 0 6px; color: var(--ink); }
+  .teamcard .role {
+    font: 500 11px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--signal);
+    margin-bottom: 18px;
+  }
+  .teamcard p { font-size: 14px; line-height: 1.6; color: var(--fg-2); margin: 0; }
+
+  /* ────────── PRESS / QUOTES ────────── */
+  .press {
+    padding: 120px 0; background: var(--ink); color: var(--fg-d1);
+    border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+  }
+  .press .eye { color: var(--fg-d3); }
+  .press .eye::before { background: var(--signal); }
+  .press blockquote {
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(32px, 3.6vw, 56px); line-height: 1.14; letter-spacing: -0.02em;
+    max-width: 1100px; margin: 0 0 48px; color: var(--fg-d1);
+  }
+  .press blockquote i { font-style: italic; color: var(--fg-d2); font-weight: 400; }
+  .press cite {
+    font: 500 12px/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--fg-d2); font-style: normal; display: block;
+  }
+  .press .row { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: 80px; }
+
+  /* ────────── FAQ ────────── */
+  .faq { padding: 150px 0 130px; }
+  .faq h2 { margin: 0 0 72px; max-width: 900px; }
+  .faq .grid { display: grid; grid-template-columns: 260px 1fr; gap: 80px; align-items: start; }
+  .faq .list { display: grid; gap: 0; border-top: 1px solid var(--hair-2); }
+  .faq details {
+    border-bottom: 1px solid var(--hair); padding: 26px 0;
+  }
+  .faq summary {
+    display: flex; justify-content: space-between; gap: 24px; align-items: center;
+    font: 400 22px/1.3 var(--display); letter-spacing: -0.015em; color: var(--ink);
+    cursor: pointer; list-style: none;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after {
+    content: "+"; font: 300 32px/1 var(--display); color: var(--fg-3);
+    transition: transform 200ms var(--ease);
+  }
+  .faq details[open] summary::after { content: "−"; color: var(--signal); }
+  .faq details p {
+    font-size: 15px; line-height: 1.7; color: var(--fg-2); margin: 16px 0 0; max-width: 720px;
+  }
+  .faq .lede-col p { font-size: 14px; line-height: 1.6; color: var(--fg-3); margin: 0; max-width: 260px; }
+
+  /* ────────── CINEMATIC HERO TAKEOVER ────────── */
+  .film {
+    position: relative; width: 100%; height: 100vh; min-height: 720px;
+    overflow: hidden; background: #0B1320; color: #F7F1E8;
+    border-bottom: 1px solid var(--hair);
+  }
+  .film .film-video {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    opacity: 0;
+    transition: opacity 800ms var(--ease);
+    image-rendering: auto;
+    will-change: opacity, transform;
+  }
+  .film .film-video.v-a { animation: breathe-a 60s ease-in-out infinite alternate; }
+  .film .film-video.v-b { animation: breathe-b 60s ease-in-out infinite alternate; }
+  .film .film-video.shown { opacity: 1; }
+  @keyframes breathe-a {
+    0%   { transform: scale(1.00) translate(0, 0); }
+    100% { transform: scale(1.03) translate(-0.6%, -0.4%); }
+  }
+  @keyframes breathe-b {
+    0%   { transform: scale(1.01) translate(-0.4%, 0.2%); }
+    100% { transform: scale(1.03) translate(0.4%, -0.4%); }
+  }
+  /* Bloom — blurred, additive duplicate on top of everything */
+  .film .bloom {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background: inherit;
+    mix-blend-mode: screen; opacity: 0.22;
+    filter: blur(24px) saturate(1.4) brightness(1.05);
+  }
+  /* Warm highlight / cool shadow color grade — very light touch */
+  .film .grade {
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    mix-blend-mode: soft-light; opacity: 0.25;
+    background:
+      radial-gradient(ellipse 60% 60% at 35% 35%, rgba(255,210,160,0.45), transparent 65%),
+      radial-gradient(ellipse 70% 70% at 75% 80%, rgba(60,80,110,0.35), transparent 65%);
+  }
+  /* Thin playback progress rail at the bottom */
+  .film .progress {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: rgba(247,241,232,0.10); z-index: 5; pointer-events: none;
+  }
+  .film .progress > span {
+    display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--signal), #F7D3B0);
+    box-shadow: 0 0 10px rgba(200,90,58,0.7);
+  }
+  .film .vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 100% 75% at 50% 50%, transparent 48%, rgba(0,0,0,0.65) 100%);
+  }
+  .film .letterbox-t, .film .letterbox-b {
+    position: absolute; left: 0; right: 0; height: 48px; z-index: 2; pointer-events: none;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0));
+  }
+  .film .letterbox-t { top: 0; }
+  .film .letterbox-b { bottom: 0; transform: rotate(180deg); }
+  .film .tc {
+    position: absolute; top: 22px; left: clamp(32px, 5vw, 72px); z-index: 4;
+    font: 500 10px/1 var(--mono); letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(247,241,232,0.65);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .film .tc .rec {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--signal);
+    animation: rec-blink 1.8s ease-in-out infinite;
+  }
+  @keyframes rec-blink { 0%,60%{opacity:1;} 80%,100%{opacity:0.15;} }
+  .film .mute-toggle {
+    position: absolute; bottom: 26px; right: clamp(20px, 3vw, 40px); z-index: 4;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(247,241,232,0.25); background: rgba(11,19,32,0.4); backdrop-filter: blur(10px);
+    color: #F7F1E8; cursor: pointer; display: grid; place-items: center;
+    font: 500 14px/1 var(--body);
+  }
+  .film .mute-toggle:hover { border-color: #F7F1E8; }
+  .film .scrim {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(1200px 800px at 20% 120%, rgba(0,0,0,0.6), transparent 65%),
+      linear-gradient(180deg, rgba(11,19,32,0.28) 0%, rgba(11,19,32,0.5) 55%, rgba(11,19,32,0.95) 100%);
+  }
+  .film .noise {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.18; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .film .topbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 26px clamp(32px, 5vw, 72px);
+    font: 500 12px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(247,241,232,0.75);
+  }
+  .film .topbar .word { font: 400 italic 22px/1 var(--display); text-transform: none; color: #F7F1E8; letter-spacing: -0.015em; }
+  .film .topbar .word b { font-style: normal; font-weight: 500; }
+  .film .topbar a { color: rgba(247,241,232,0.75); margin-left: 28px; }
+  .film .topbar a:hover { color: #F7F1E8; }
+  .film .topbar .cta {
+    padding: 10px 18px; border-radius: 999px; background: #F7F1E8; color: #1D2C38;
+    letter-spacing: 0.1em;
+  }
+  .film .topbar .cta:hover { background: var(--signal); color: #F7F1E8; }
+
+  .film .inner {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
+    padding: 0 clamp(32px, 5vw, 72px) 56px;
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 64px; align-items: end;
+  }
+  .film .inner .k {
+    font: 500 11px/1 var(--mono); letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(247,241,232,0.7); margin-bottom: 28px;
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+  .film .inner .k::before { content: ""; width: 24px; height: 1px; background: var(--signal); }
+  .film .inner h1 {
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(56px, 7vw, 132px); line-height: 0.98; letter-spacing: -0.035em;
+    color: #F7F1E8; margin: 0 0 36px;
+  }
+  .film .inner h1 .l1, .film .inner h1 .l2 {
+    display: block; overflow: hidden; line-height: 1.02;
+  }
+  .film .inner h1 .l1 > span, .film .inner h1 .l2 > span {
+    display: inline-block; transform: translateY(102%);
+    animation: rise 900ms var(--ease) 260ms forwards;
+  }
+  .film .inner h1 .l2 > span { animation-delay: 520ms; }
+  @keyframes rise { to { transform: translateY(0); } }
+  .film .inner .k, .film .inner .lede, .film .inner .cta-row, .film .inner .stats {
+    opacity: 0; transform: translateY(16px);
+    animation: fade-up 800ms var(--ease) forwards;
+  }
+  .film .inner .k    { animation-delay: 140ms; }
+  .film .inner .lede { animation-delay: 820ms; }
+  .film .inner .cta-row { animation-delay: 980ms; }
+  .film .inner .stats { animation-delay: 1120ms; }
+  @keyframes fade-up { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .film .inner h1 .l1 > span, .film .inner h1 .l2 > span { animation: none; transform: none; }
+    .film .inner .k, .film .inner .lede, .film .inner .cta-row, .film .inner .stats { animation: none; opacity: 1; transform: none; }
+  }
+  .film .inner h1 i { font-style: italic; font-weight: 400; color: rgba(247,241,232,0.88); }
+  .film .inner .lede {
+    font-size: 17px; line-height: 1.55; color: rgba(247,241,232,0.82); max-width: 520px; margin: 0 0 40px;
+  }
+  .film .inner .cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .film .inner .btn {
+    padding: 16px 26px; border-radius: 999px;
+    font: 500 14px/1 var(--body); letter-spacing: 0.02em;
+    border: 1px solid transparent; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px;
+    transition: all 200ms var(--ease);
+  }
+  .film .inner .btn.primary { background: #F7F1E8; color: #1D2C38; border-color: #F7F1E8; }
+  .film .inner .btn.primary:hover { background: var(--signal); color: #F7F1E8; border-color: var(--signal); }
+  .film .inner .btn.ghost { background: rgba(255,255,255,0.06); color: #F7F1E8; border-color: rgba(247,241,232,0.35); backdrop-filter: blur(6px); }
+  .film .inner .btn.ghost:hover { border-color: #F7F1E8; }
+  .film .inner .btn .play-icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--signal); color: #F7F1E8;
+    display: grid; place-items: center; font-size: 9px;
+  }
+  .film .inner .stats {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px;
+    border-top: 1px solid rgba(247,241,232,0.15); padding-top: 28px;
+  }
+  .film .inner .stats .m .v {
+    font: 300 48px/1 var(--display); letter-spacing: -0.03em; color: #F7F1E8;
+    font-variant-numeric: tabular-nums;
+  }
+  .film .inner .stats .m .k {
+    font: 500 10px/1.4 var(--mono); letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(247,241,232,0.6); margin-top: 10px;
+  }
+  .film .scroll-cue {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 3;
+    font: 500 10px/1 var(--mono); letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(247,241,232,0.55); display: flex; align-items: center; gap: 10px;
+  }
+  .film .scroll-cue::after {
+    content: ""; width: 1px; height: 36px; background: rgba(247,241,232,0.3);
+    animation: scroll-cue 2.6s ease-in-out infinite;
+    transform-origin: top;
+  }
+  @keyframes scroll-cue {
+    0%, 20%    { transform: scaleY(0); opacity: 0; }
+    40%        { transform: scaleY(1); opacity: 1; }
+    100%       { transform: scaleY(1); opacity: 0; }
+  }
+
+  /* Film modal */
+  .film-modal[open] {
+    border: 0; background: transparent; padding: 0;
+    width: min(94vw, 1080px); max-height: 86vh;
+    animation: dialog-in 260ms var(--ease);
+  }
+  @keyframes dialog-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  .film-modal::backdrop {
+    background: rgba(11,19,32,0.82); backdrop-filter: blur(14px);
+  }
+  .film-modal .frame {
+    background: #0B1320; border: 1px solid rgba(247,241,232,0.1);
+    border-radius: 18px; overflow: hidden; position: relative;
+    aspect-ratio: 16 / 9;
+  }
+  .film-modal .frame .placeholder {
+    position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+    padding: 40px; color: rgba(247,241,232,0.75);
+    background: radial-gradient(circle at 50% 40%, rgba(200,90,58,0.18), transparent 60%), #0B1320;
+  }
+  .film-modal .placeholder .big {
+    font: 300 italic clamp(36px, 4vw, 56px)/1.08 var(--display); letter-spacing: -0.02em;
+    color: #F7F1E8; margin-bottom: 14px;
+  }
+  .film-modal .placeholder .sm {
+    font: 500 11px/1.4 var(--mono); letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(247,241,232,0.6);
+  }
+  .film-modal .close {
+    position: absolute; top: 18px; right: 18px; z-index: 2;
+    width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(247,241,232,0.2);
+    background: rgba(255,255,255,0.05); color: #F7F1E8; cursor: pointer;
+    font: 500 14px/1 var(--body); display: grid; place-items: center;
+  }
+  .film-modal .close:hover { background: rgba(255,255,255,0.12); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .film .film-video { display: none; }
+    .film .grade, .film .bloom { display: none; }
+    .film { background-image: url('assets/hero-lifestyle.png'); background-size: cover; background-position: center; }
+    .film .scroll-cue::after { animation: none; transform: scaleY(1); opacity: 1; }
+    .film .tc .rec { animation: none; }
+  }
+  @media (max-width: 860px){
+    .film .inner { grid-template-columns: 1fr; gap: 32px; padding-bottom: 80px; }
+    .film .topbar .nav { display: none; }
+    .film { min-height: 640px; }
+  }
+
+  /* ────────── HALO-STYLE SECTION MARQUEE ────────── */
+  .marquee {
+    background: var(--ink); color: var(--paper);
+    border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+    overflow: hidden; padding: 34px 0; position: relative;
+  }
+  .marquee.paper {
+    background: var(--paper-2); color: var(--ink);
+  }
+  .marquee .strip {
+    display: flex; gap: 56px; white-space: nowrap; will-change: transform;
+    font-family: var(--display); font-weight: 300;
+    font-size: clamp(40px, 5.4vw, 96px); letter-spacing: -0.025em; line-height: 1;
+  }
+  .marquee .strip span { display: inline-flex; align-items: center; gap: 56px; }
+  .marquee .strip i { font-style: italic; opacity: 0.75; }
+  .marquee .strip .dot {
+    width: 12px; height: 12px; border-radius: 50%; background: var(--signal);
+    flex-shrink: 0;
+  }
+
+  /* Photo zoom on hover for all lifestyle/device shots */
+  .device .photo img, .teamcard .pic img, .appshow .phone img {
+    transition: transform 900ms var(--ease);
+  }
+  .device .photo:hover img { transform: scale(1.04); }
+  .teamcard .pic:hover img { transform: scale(1.06); }
+
+  /* Arrow slide on CTA hover */
+  .btn.primary span[aria-hidden], .btn.ghost span[aria-hidden],
+  .bar a.cta span[aria-hidden], .film .inner .btn span:last-child {
+    display: inline-block; transition: transform 260ms var(--ease);
+  }
+  .btn:hover span[aria-hidden], .bar a.cta:hover span[aria-hidden] { transform: translateX(4px); }
+
+  /* Section numbers as giant ghost digits in margin, Halo-style */
+  section.problem, section.loop, section.valid, section.team, section.faq {
+    position: relative;
+  }
+  section.problem::before, section.loop::before, section.valid::before,
+  section.team::before, section.faq::before {
+    content: attr(data-chapter); position: absolute;
+    top: 80px; right: clamp(16px, 4vw, 60px);
+    font: 300 clamp(80px, 12vw, 180px)/1 var(--display); letter-spacing: -0.04em;
+    color: var(--ink); opacity: 0.05; pointer-events: none; z-index: 0;
+  }
+  section.loop::before, section.valid::before, section.team::before, section.faq::before {
+    color: var(--ink); opacity: 0.045;
+  }
+
+  /* ────────── MORE TEXT MOTION ────────── */
+  /* Section-number eyebrow glitch on hover */
+  .eye { cursor: default; }
+  .eye:hover { color: var(--ink); transition: color 160ms var(--ease); }
+
+  /* Variable-font weight breathe on wordmarks */
+  .bar .word, .film .topbar .word, footer .word, header .word {
+    font-variation-settings: 'wght' 500; font-weight: 500;
+    animation: weight-breathe 9s ease-in-out infinite alternate;
+  }
+  @keyframes weight-breathe {
+    from { font-variation-settings: 'wght' 350; }
+    to   { font-variation-settings: 'wght' 560; }
+  }
+
+  /* Brand wordmark breathing letter-spacing in footer */
+  footer .word {
+    animation: word-breathe 9s ease-in-out infinite alternate;
+  }
+  @keyframes word-breathe {
+    from { letter-spacing: -0.03em; }
+    to   { letter-spacing:  0.00em; }
+  }
+
+  /* Lede paragraph word-fade on view */
+  .lede .w { opacity: 0.35; transition: opacity 600ms var(--ease); }
+  .lede.in .w { opacity: 1; }
+
+  /* Price-section huge number: slow glow pulse */
+  .price-section h2 { animation: price-pulse 6s ease-in-out infinite alternate; }
+  @keyframes price-pulse {
+    from { text-shadow: 0 0 0 rgba(200,90,58,0); }
+    to   { text-shadow: 0 0 30px rgba(200,90,58,0.10); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    footer .word, .price-section h2 { animation: none; }
+    .lede .w { opacity: 1; }
+  }
+
+  /* ────────── CUSTOM CURSOR (Ochi/Sundown/Studio-clone vocabulary) ────────── */
+  .cursor {
+    position: fixed; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--signal); pointer-events: none; z-index: 200;
+    mix-blend-mode: difference; transform: translate(-50%, -50%);
+    transition: width 260ms var(--ease), height 260ms var(--ease), background 260ms var(--ease);
+    will-change: transform;
+  }
+  .cursor.lg { width: 72px; height: 72px; background: rgba(247,241,232,0.9); mix-blend-mode: difference; }
+  .cursor.hide { opacity: 0; }
+  @media (hover: none), (pointer: coarse) { .cursor { display: none; } }
+
+  /* ────────── CINEMATIC MOTION (Halo/Oura vocabulary) ────────── */
+
+  /* Image reveal mask: slides a clip from left to right as the image scrolls in */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .device .photo, .teamcard .pic, .hero .right .stage, .appshow .phone {
+        clip-path: inset(0 100% 0 0);
+        animation: mask-reveal linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 55%;
+      }
+      @keyframes mask-reveal { to { clip-path: inset(0 0% 0 0); } }
+    }
+  }
+
+  /* Hover lift for all cards */
+  .card-v, .prompt, .teamcard {
+    transition: transform 380ms var(--ease), box-shadow 380ms var(--ease), border-color 380ms var(--ease);
+  }
+  .card-v:hover, .prompt:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 40px rgba(29,44,56,0.10);
+    border-color: var(--hair-2);
+  }
+
+  /* Link underline wipe */
+  .bar a.link, .film .topbar .nav a, footer ul a {
+    position: relative; display: inline-block;
+  }
+  .bar a.link::after, .film .topbar .nav a::after, footer ul a::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px;
+    background: currentColor; transform: scaleX(0); transform-origin: 0 50%;
+    transition: transform 300ms var(--ease);
+  }
+  .bar a.link:hover::after, .film .topbar .nav a:hover::after, footer ul a:hover::after { transform: scaleX(1); }
+
+  /* Rail active dot pulses with the signal color */
+  .rail .idx a.on::before {
+    box-shadow: 0 0 0 0 rgba(200,90,58,0.6);
+    animation: rail-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes rail-pulse {
+    50% { box-shadow: 0 0 0 8px rgba(200,90,58,0); }
+  }
+
+  /* Split-text heading support — each line inside h2.display can be split into span.l */
+  h2.display .line {
+    display: block; overflow: hidden;
+  }
+  h2.display .line > span {
+    display: inline-block; transform: translateY(100%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      h2.display .line > span {
+        animation: rise-line 900ms var(--ease) both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 50%;
+      }
+      h2.display .line:nth-child(2) > span { animation-delay: 140ms; }
+      h2.display .line:nth-child(3) > span { animation-delay: 260ms; }
+      @keyframes rise-line { to { transform: translateY(0); } }
+    }
+  }
+
+  /* Primary CTAs: magnetic cursor shimmer */
+  .btn.primary, .film .inner .btn.primary {
+    position: relative; overflow: hidden;
+  }
+  .btn.primary::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle 80px at var(--mx, 50%) var(--my, 50%), rgba(247,241,232,0.28), transparent 55%);
+    opacity: 0; transition: opacity 220ms var(--ease);
+    pointer-events: none;
+  }
+  .btn.primary:hover::before { opacity: 1; }
+
+  /* Device photo subtle tilt under cursor */
+  .device .photo { transform-style: preserve-3d; }
+  .device .photo img {
+    transition: transform 520ms var(--ease);
+    transform: perspective(900px) rotateX(calc(var(--ty,0) * 2deg)) rotateY(calc(var(--tx,0) * -2deg)) scale(1.01);
+  }
+
+  /* FAQ summary: slide-in caret chevron */
+  .faq summary {
+    transition: color 200ms var(--ease), padding-left 280ms var(--ease);
+  }
+  .faq summary:hover { color: var(--signal-glow); padding-left: 6px; }
+  .faq details[open] summary { color: var(--ink); }
+
+  /* Ticker pauses on hover (reads easier) */
+  .ticker:hover .row { animation-play-state: paused; }
+
+  /* Crossfade image behind PRESS section */
+  .press { position: relative; overflow: hidden; }
+  .press::before, .press::after {
+    content: ""; position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0.18; mix-blend-mode: screen; filter: saturate(0.4);
+    animation: press-cross 16s ease-in-out infinite alternate;
+  }
+  .press::before { background-image: url('assets/photo-headband-hero.png'); }
+  .press::after  { background-image: url('assets/photo-angles.png'); animation-delay: 8s; }
+  .press > .wrap { position: relative; z-index: 1; }
+  @keyframes press-cross {
+    0%, 20%  { opacity: 0; }
+    50%      { opacity: 0.15; }
+    80%,100% { opacity: 0; }
+  }
+
+  /* Compare table: shimmer-in the VertiBand column header when visible */
+  .compare .col-us {
+    background: linear-gradient(180deg, rgba(200,90,58,0.08), rgba(200,90,58,0.03));
+  }
+  .compare tbody tr:hover td { background: rgba(29,44,56,0.03); }
+  .compare tbody tr:hover .col-us { background: rgba(200,90,58,0.09); }
+
+  /* ────────── SCROLL-DRIVEN (CSS-native, non-conflicting with GSAP) ────────── */
+  @media (prefers-reduced-motion: no-preference) {
+    /* Page-wide reading progress bar, purely CSS scroll-timeline */
+    @supports (animation-timeline: scroll(root)) {
+      body::before {
+        content: ""; position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100;
+        background: linear-gradient(90deg, var(--signal), #F7D3B0);
+        transform-origin: 0 50%; transform: scaleX(0);
+        animation: read-progress linear both;
+        animation-timeline: scroll(root);
+      }
+      @keyframes read-progress { to { transform: scaleX(1); } }
+    }
+  }
+
+  /* ────────── Hero canvas overlay ────────── */
+  .pose-overlay {
+    position: absolute; top: 22px; right: 22px; z-index: 3;
+    width: 108px; height: 108px; border-radius: 12px;
+    background: rgba(15,35,65,0.55); backdrop-filter: blur(10px);
+    border: 1px solid var(--hair-d2);
+    display: grid; place-items: center; overflow: hidden;
+  }
+  .pose-overlay canvas { width: 100%; height: 100%; display: block; }
+  .pose-overlay .lbl {
+    position: absolute; top: 8px; left: 10px;
+    font: 500 9px/1 var(--mono); letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--fg-d2);
+  }
+
+  @media (max-width: 960px) {
+    .rail { display: none; }
+    .page { margin-left: 0; }
+    .hero .grid, .problem .facts, .device .grid, .loop .stages, .phones,
+    .valid .list, .price-section .wrap, .gem .grid, footer .wrap,
+    .team .grid, .faq .grid, .press .row {
+      grid-template-columns: 1fr; gap: 32px;
+    }
+    .hero .right { min-height: 520px; padding: 32px; }
+    .bar .right-group { display: none; }
+    .teamcard { grid-template-columns: 1fr; }
+    .teamcard .pic { max-width: 180px; }
+    .compare table, .compare thead, .compare tbody, .compare tr, .compare td { display: block; }
+    .compare thead { display: none; }
+    .compare tr { border-bottom: 1px solid var(--hair-2); padding: 16px 0; }
+    .compare td { border: 0; padding: 6px 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+
+<aside class="rail">
+  <div class="mark">V</div>
+  <nav class="idx">
+    <a href="#home" data-target="home" class="on">HOME</a>
+    <a href="#problem" data-target="problem">PROBLEM</a>
+    <a href="#device" data-target="device">DEVICE</a>
+    <a href="#method" data-target="method">METHOD</a>
+    <a href="#compare" data-target="compare">COMPARE</a>
+    <a href="#app" data-target="app">APP</a>
+    <a href="#evidence" data-target="evidence">EVIDENCE</a>
+    <a href="#team" data-target="team">TEAM</a>
+    <a href="#reserve" data-target="reserve">RESERVE</a>
+    <a href="#faq" data-target="faq">FAQ</a>
+  </nav>
+  <div class="foot">V—01</div>
+</aside>
+
+<div class="page">
+
+  <!-- CINEMATIC HERO TAKEOVER -->
+  <section class="film" id="home" data-section="home" aria-label="VertiBand intro">
+    <video class="film-video v-a" id="hero-film-a" autoplay muted loop playsinline preload="auto"
+           poster="assets/hero-lifestyle.png" aria-hidden="true" data-clip="assets/hero-film.mp4">
+      <source src="assets/hero-film.mp4" type="video/mp4">
+    </video>
+    <video class="film-video v-b" id="hero-film-b" muted loop playsinline preload="auto"
+           aria-hidden="true" data-clip="assets/hero-film-2.mp4">
+      <source src="assets/hero-film-2.mp4" type="video/mp4">
+    </video>
+    <div class="grade" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="scrim"></div>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="letterbox-t" aria-hidden="true"></div>
+    <div class="letterbox-b" aria-hidden="true"></div>
+    <button class="mute-toggle" id="mute-toggle" aria-label="Toggle sound" title="Toggle sound">🔇</button>
+    <div class="progress" aria-hidden="true"><span id="film-prog"></span></div>
+
+    <div class="topbar">
+      <span class="word">Verti<b>Band</b><i>.</i></span>
+      <div class="nav">
+        <a href="#device">DEVICE</a>
+        <a href="#method">METHOD</a>
+        <a href="#evidence">EVIDENCE</a>
+        <a class="cta" href="#reserve">RESERVE</a>
+      </div>
+    </div>
+
+    <div class="inner">
+      <div>
+        <div class="k">V—01 · Vestibular therapy, verified</div>
+        <h1><span class="l1"><span>Stop guessing.</span></span><span class="l2"><span>Start <i>healing.</i></span></span></h1>
+        <p class="lede">A home wearable that watches your head through the Epley maneuver and verifies each stage in real time. 1.9° mean angle error. 100 Hz tracking. One device. One purchase.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="#reserve">Reserve yours →</a>
+        </div>
+      </div>
+      <div class="stats" aria-label="Key metrics">
+        <div class="m"><div class="v" data-count="1.9" data-suffix="°" data-decimals="1">0°</div><div class="k">Mean angle error</div></div>
+        <div class="m"><div class="v" data-count="100" data-suffix="Hz">0Hz</div><div class="k">IMU tracking</div></div>
+        <div class="m"><div class="v" data-count="94" data-suffix="%">0%</div><div class="k">Stage accuracy</div></div>
+        <div class="m"><div class="v" data-count="219" data-prefix="$">$0</div><div class="k">One-time, 10-yr warranty</div></div>
+      </div>
+    </div>
+
+    <div class="scroll-cue" aria-hidden="true">Scroll</div>
+  </section>
+
+  <!-- bar -->
+  <div class="bar">
+    <span class="word">Verti<b>Band</b><i>.</i></span>
+    <div class="right-group">
+      <a class="link" href="#device">DEVICE</a>
+      <a class="link" href="#method">METHOD</a>
+      <a class="link" href="#evidence">EVIDENCE</a>
+      <a class="cta" href="#reserve">Reserve</a>
+    </div>
+  </div>
+
+  <!-- OVERVIEW (below-the-fold split hero) -->
+  <section class="hero" id="overview" data-section="overview">
+    <div class="grid">
+      <div class="left">
+        <div class="kicker">Vestibular therapy, verified</div>
+        <h1>Stop guessing.<br>Start <span class="accent">healing.</span></h1>
+        <p class="lede">VertiBand watches your head while you do the Epley maneuver, and tells you when you got it right. No clinic wait. No uncertainty. Just one device, one purchase, a calmer morning.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="#reserve">Reserve yours <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="price"><b>$219</b> one&#8209;time · free shipping · 10&#8209;year warranty</div>
+      </div>
+      <div class="right" style="padding:0;">
+        <div class="stage" style="border-radius:0; aspect-ratio:auto; height:100%; width:100%;">
+          <img src="assets/hero-lifestyle.png" alt="Woman wearing VertiBand in morning light" style="object-fit:cover; padding:0; mix-blend-mode:normal; opacity:1; filter:none;">
+          <div class="pose-overlay" aria-hidden="true">
+            <div class="lbl">Pose</div>
+            <canvas id="hero-pose" width="216" height="216"></canvas>
+          </div>
+          <div class="caption">
+            <div class="l">Fig. 01<br>Morning session · V01</div>
+            <div class="r">
+              <div class="m"><div class="v">1.9°</div><div class="k">MEAN ERROR</div></div>
+              <div class="m"><div class="v">100Hz</div><div class="k">TRACKING</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="ticker">
+    <div class="row">
+      <span><b>2.4M</b> BPPV diagnoses · year</span>
+      <span><b>50%</b> of home treatments fail</span>
+      <span><b>6 wks</b> average clinic wait</span>
+      <span><b>$400+</b> per clinic visit</span>
+      <span><b>1.9°</b> mean angle error</span>
+      <span><b>94%</b> stage transition accuracy</span>
+      <span><b>2.4M</b> BPPV diagnoses · year</span>
+      <span><b>50%</b> of home treatments fail</span>
+      <span><b>6 wks</b> average clinic wait</span>
+      <span><b>$400+</b> per clinic visit</span>
+      <span><b>1.9°</b> mean angle error</span>
+      <span><b>94%</b> stage transition accuracy</span>
+    </div>
+  </div>
+
+  <!-- PROBLEM -->
+  <section class="problem" id="problem" data-section="problem" data-chapter="02">
+    <div class="wrap">
+      <div class="eye">02 · The status quo</div>
+      <h2 class="quote">BPPV is the most common cause of vertigo, and the least well&#8209;served. <i>Patients wait weeks for a 90&#8209;second maneuver that a clinician can do in their sleep.</i></h2>
+      <div class="facts">
+        <div class="fact">
+          <div class="n"><span data-count="2.4" data-decimals="1">0</span><small>M</small></div>
+          <div class="k">Diagnoses yearly</div>
+          <div class="d">Incidence in the US alone. Most cases resolve with one correctly performed maneuver.</div>
+        </div>
+        <div class="fact">
+          <div class="n"><span data-count="6">0</span><small>wk</small></div>
+          <div class="k">Average wait</div>
+          <div class="d">Time from symptom onset to seeing a vestibular specialist.</div>
+        </div>
+        <div class="fact">
+          <div class="n"><span data-count="50">0</span><small>%</small></div>
+          <div class="k">Home failure rate</div>
+          <div class="d">Of patients who try the Epley at home without guidance, half do it wrong.</div>
+        </div>
+        <div class="fact">
+          <div class="n"><small>$</small><span data-count="400">0</span><small>+</small></div>
+          <div class="k">Per visit</div>
+          <div class="d">Out&#8209;of&#8209;pocket for an ENT appointment when insurance does not cover it.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE · ink -->
+  <div class="marquee" aria-hidden="true">
+    <div class="strip" id="marq-1">
+      <span>Vestibular therapy, verified <i>·</i></span>
+      <span class="dot"></span>
+      <span>1.9° mean angle error <i>·</i></span>
+      <span class="dot"></span>
+      <span>100 Hz IMU tracking <i>·</i></span>
+      <span class="dot"></span>
+      <span>Built for home <i>·</i></span>
+      <span class="dot"></span>
+      <span>Vestibular therapy, verified <i>·</i></span>
+      <span class="dot"></span>
+      <span>1.9° mean angle error <i>·</i></span>
+      <span class="dot"></span>
+      <span>100 Hz IMU tracking <i>·</i></span>
+      <span class="dot"></span>
+      <span>Built for home <i>·</i></span>
+    </div>
+  </div>
+
+  <!-- DEVICE -->
+  <section class="device" id="device" data-section="device">
+    <div class="wrap">
+      <div class="grid">
+        <div class="photo">
+          <div class="cap">Fig. 02 · Three&#8209;quarter view</div>
+          <img src="assets/photo-angles.png" alt="VertiBand angles">
+        </div>
+        <div class="text">
+          <div class="eye">03 · The device</div>
+          <h2 class="display">A sensor,<br>a <i>speaker,</i><br>a headband.</h2>
+          <p>No screens. No fluff. The band senses, the app guides. Together they run the session, verify the stage, and log the result. The electronics are simple on purpose.</p>
+          <div class="specs">
+            <div class="r"><div class="k">Sensing</div><div class="n">9&#8209;axis IMU, sensor&#8209;fused gyro + accelerometer</div><div class="v">100 Hz</div></div>
+            <div class="r"><div class="k">Angle accuracy</div><div class="n">Benchmarked against optical motion capture</div><div class="v">1.9° mean</div></div>
+            <div class="r"><div class="k">Audio</div><div class="n">Class&#8209;D amplifier, tuned voice guidance</div><div class="v">&lt;45 dB</div></div>
+            <div class="r"><div class="k">Battery</div><div class="n">Rechargeable lithium, 6 hrs active use</div><div class="v">USB&#8209;C</div></div>
+            <div class="r"><div class="k">Housing</div><div class="n">Precision&#8209;printed bioplastic, hand&#8209;finished, soft&#8209;touch matte</div><div class="v">IP54</div></div>
+            <div class="r"><div class="k">Band</div><div class="n">Woven para&#8209;aramid, sweat&#8209;wicking, machine washable</div><div class="v">Adjustable 52&#8211;62 cm</div></div>
+            <div class="r"><div class="k">Tensile load</div><div class="n">Band webbing static pull test</div><div class="v">Rated 12 kg</div></div>
+            <div class="r"><div class="k">Wireless</div><div class="n">Bluetooth LE &amp; Wi&#8209;Fi for the companion app</div><div class="v">BLE 5.2</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOOP -->
+  <section class="loop" id="method" data-section="method" data-chapter="04">
+    <div class="wrap">
+      <div class="eye">04 · The closed loop</div>
+      <h2 class="display">Every maneuver has four phases. <i>VertiBand knows which one you are in.</i></h2>
+      <p class="lede">The Epley is a sequence of head positions, each held for 30 to 60 seconds. Get the angle wrong, skip a stage, or rush the wait, and it will not work. So we built a sensor that checks your work.</p>
+      <div class="stages">
+        <div class="stage-l"><div class="dot"></div><div class="n">01 · Sense</div><h3><i>Measure.</i></h3><p>The IMU samples head orientation 100 times a second. Sensor fusion resolves it to within 1.9 degrees of truth.</p></div>
+        <div class="stage-l"><div class="dot"></div><div class="n">02 · Cue</div><h3><i>Guide.</i></h3><p>A calm voice tells you the next position. Soft tones nudge you if you drift. The device waits until you are truly still to advance.</p></div>
+        <div class="stage-l"><div class="dot"></div><div class="n">03 · Verify</div><h3><i>Check.</i></h3><p>Each stage transition requires a 94 percent confidence match against the reference trajectory before unlocking.</p></div>
+        <div class="stage-l"><div class="dot"></div><div class="n">04 · Learn</div><h3><i>Adapt.</i></h3><p>Your session data trains the companion app to your specific vertigo pattern, so cues get sharper every run.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="compare" id="compare" data-section="compare">
+    <div class="wrap">
+      <div class="eye">05 · The alternatives</div>
+      <h2 class="display">The clinic gets it right. Everyone else guesses. <i>VertiBand changes the math at home.</i></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>&nbsp;</th>
+            <th>YouTube tutorial</th>
+            <th>In-person clinic</th>
+            <th class="col-us">VertiBand</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Angle measured?</td>
+            <td class="val no">Eyeballed</td>
+            <td class="val good">By clinician</td>
+            <td class="col-us val good">1.9° mean error, 100 Hz</td>
+          </tr>
+          <tr>
+            <td>Stage verified before advancing?</td>
+            <td class="val no">Never</td>
+            <td class="val good">Always</td>
+            <td class="col-us val good">94% confidence gate</td>
+          </tr>
+          <tr>
+            <td>Time to first session</td>
+            <td class="val good">Now</td>
+            <td class="val no">6-week average</td>
+            <td class="col-us val good">Unbox and begin</td>
+          </tr>
+          <tr>
+            <td>Cost per session</td>
+            <td class="val good">Free</td>
+            <td class="val no">$400+</td>
+            <td class="col-us val good">One-time $219</td>
+          </tr>
+          <tr>
+            <td>Works for recurrence</td>
+            <td class="val good">Repeatable</td>
+            <td class="val no">New appointment</td>
+            <td class="col-us val good">Always ready on the nightstand</td>
+          </tr>
+          <tr>
+            <td>Data logged</td>
+            <td class="val no">None</td>
+            <td class="val no">Chart note</td>
+            <td class="col-us val good">Every session, every angle</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MARQUEE · paper -->
+  <div class="marquee paper" aria-hidden="true">
+    <div class="strip" id="marq-2">
+      <span>Precision you can feel <i>·</i></span>
+      <span class="dot"></span>
+      <span>One device. One purchase. <i>·</i></span>
+      <span class="dot"></span>
+      <span>No screens. No fluff. <i>·</i></span>
+      <span class="dot"></span>
+      <span>Ten-year warranty <i>·</i></span>
+      <span class="dot"></span>
+      <span>Precision you can feel <i>·</i></span>
+      <span class="dot"></span>
+      <span>One device. One purchase. <i>·</i></span>
+      <span class="dot"></span>
+      <span>No screens. No fluff. <i>·</i></span>
+      <span class="dot"></span>
+      <span>Ten-year warranty <i>·</i></span>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <section class="appshow" id="app" data-section="app">
+    <div class="wrap">
+      <div class="head reveal">
+        <div class="eye">06 · The companion app</div>
+        <h2 class="display">The brain of <i>the band.</i></h2>
+        <p>The app is where VertiBand thinks. It pairs, configures, runs the session, logs every angle, every stage, every session. Without it, the band is just a sensor. With it, you get therapy that gets smarter every run.</p>
+      </div>
+      <div class="phones">
+        <div class="phone"><div class="notch"></div><img src="assets/photo-app-1.webp" alt="App pairing screen"><div class="tag">Pair the band</div></div>
+        <div class="phone"><div class="notch"></div><img src="assets/photo-app-2.png" alt="Session setup"><div class="tag">Configure the session</div></div>
+        <div class="phone ghost"><div class="notch"></div><div class="msg">IN&#8209;SESSION VIEW<br>COMING SOON</div><div class="tag">Track your progress</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALIDATION -->
+  <section class="valid" id="evidence" data-section="evidence" data-chapter="07">
+    <div class="wrap">
+      <div class="eye">07 · Evidence</div>
+      <h2 class="display">Grounded in the physics of the maneuver. <i>Measured, logged, verified.</i></h2>
+      <div class="list">
+        <div class="card-v">
+          <div class="k">Measurement</div>
+          <h4>1.9° mean angle error</h4>
+          <p>Sensor&#8209;fused orientation from a 9&#8209;axis IMU at 100 Hz, cross&#8209;validated against a reference inclinometer across hundreds of logged self&#8209;trials.</p>
+        </div>
+        <div class="card-v">
+          <div class="k">Method</div>
+          <h4>Closed&#8209;loop stage verification</h4>
+          <p>Each Epley stage unlocks only when head orientation matches the reference trajectory within tolerance for a sustained hold. No skipping. No guessing. No advancing on vibes.</p>
+        </div>
+        <div class="card-v">
+          <div class="k">Open</div>
+          <h4>Every session is a data point</h4>
+          <p>A structured JSON log of every angle, every stage, every session ships with every device. Your recovery trajectory is yours to inspect or share with your physician.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRESS / QUOTES -->
+  <section class="press">
+    <div class="wrap">
+      <div class="eye">08 · Quiet reception</div>
+      <blockquote>
+        "The hardest part of treating BPPV at home isn't the maneuver itself. <i>It's knowing you did it right.</i> A device that answers that is overdue."
+      </blockquote>
+      <cite>— Dr. M. Alvarez, Vestibular Physiotherapist · Consulting reviewer</cite>
+      <div class="row">
+        <div>
+          <blockquote style="font-size:clamp(22px,2.4vw,32px);line-height:1.25;margin-bottom:22px;">
+            "We built VertiBand because my mother waited six weeks for a 90-second procedure."
+          </blockquote>
+          <cite>Tanmay · Co-founder</cite>
+        </div>
+        <div>
+          <blockquote style="font-size:clamp(22px,2.4vw,32px);line-height:1.25;margin-bottom:22px;">
+            "Closed-loop feedback is what separates a tool from a toy. The Epley deserved one."
+          </blockquote>
+          <cite>Zavier · Co-founder</cite>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section class="team" id="team" data-section="team" data-chapter="09">
+    <div class="wrap">
+      <div class="eye">09 · The team</div>
+      <h2 class="display">Two builders. <i>One problem worth solving.</i></h2>
+      <p class="lede">We started VertiBand after watching someone close to us fight vertigo alone for weeks. The maneuver that fixes it takes ninety seconds. Getting it right without help is the hard part. So we built the help.</p>
+      <div class="grid">
+        <div class="teamcard">
+          <div class="pic"><img src="assets/photo-tanmay.jpg" alt="Tanmay, co-founder"></div>
+          <div>
+            <h3>Tanmay</h3>
+            <div class="role">Co-founder · Software</div>
+            <p>Leads the session engine, the companion app, and the real&#8209;time AI coaching layer. Turns sensor noise into verifiable stages and calm voice cues. Cares a lot about making rigor feel weightless.</p>
+          </div>
+        </div>
+        <div class="teamcard">
+          <div class="pic"><img src="assets/photo-zavier.jpg" alt="Zavier, co-founder"></div>
+          <div>
+            <h3>Zavier</h3>
+            <div class="role">Co-founder · Hardware</div>
+            <p>Leads the sensor stack, the audio path, and the band itself. Spent the first six months getting a 38&#8209;gram device to sit still on a moving head. Believes good hardware disappears when you wear it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICE -->
+  <section class="price-section" id="reserve" data-section="reserve">
+    <div class="wrap">
+      <div>
+        <div class="eye">10 · The offer</div>
+        <h2><sup>$</sup>219<small>once.</small></h2>
+        <p class="sub">No subscription. No upsell. One device, one purchase, one decade of warranty. If it does not help, return it.</p>
+      </div>
+      <ul>
+        <li>Device, USB&#8209;C cable, carrying case</li>
+        <li>Free 2&#8209;day shipping inside the US</li>
+        <li>10&#8209;year limited warranty, no questions</li>
+        <li>Companion app for iOS and Android, included</li>
+        <li>Your data stays on the band until you choose to sync</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq" data-section="faq" data-chapter="11">
+    <div class="wrap">
+      <div class="eye">11 · Common questions</div>
+      <h2 class="display">What people ask before <i>they reserve.</i></h2>
+      <div class="grid">
+        <div class="lede-col">
+          <p>If it's not here, email us and we'll add it. We answer every reasonable question personally, usually within a day.</p>
+        </div>
+        <div class="list">
+          <details>
+            <summary>Does it actually treat BPPV, or just guide me?</summary>
+            <p>Both. The Epley maneuver itself is the treatment — it moves a dislodged otolith crystal back into place. VertiBand's job is to make sure you perform it correctly so the treatment works. The hard part isn't the motion, it's the precision. That's where the sensor earns its keep.</p>
+          </details>
+          <details>
+            <summary>How do I know it's working?</summary>
+            <p>Every session produces a structured log — angle accuracy, hold quality, a composite VertiScore, and a post-session note written by the AI coach. Across sessions you see your recovery trajectory. If it's not moving in the right direction, return the device.</p>
+          </details>
+          <details>
+            <summary>Can it diagnose BPPV or just treat it?</summary>
+            <p>We're researching a head-IMU nystagmus estimator that flags active BPPV episodes from 1–3 Hz oscillations in yaw-rate. Today it ships as an experimental indicator. Diagnosis still requires a clinician. Don't skip one if this is your first vertigo episode.</p>
+          </details>
+          <details>
+            <summary>What about posterior vs horizontal canal BPPV?</summary>
+            <p>The shipped protocol is the right- and left-side Epley for posterior-canal BPPV (by far the most common). A Gufoni maneuver for horizontal-canal cases is on the roadmap for a firmware update.</p>
+          </details>
+          <details>
+            <summary>Is this a medical device?</summary>
+            <p>Not yet. VertiBand is a research prototype and a wellness product. We are pursuing appropriate regulatory pathways but we are not going to wait on them to help people at home.</p>
+          </details>
+          <details>
+            <summary>Why a one-time purchase and not a subscription?</summary>
+            <p>Because a subscription would be extortion. The device does its job on day one and on day 10,000. We make money once, you own the device, the data stays with you. The end.</p>
+          </details>
+          <details>
+            <summary>What if it doesn't help?</summary>
+            <p>30-day return, no questions. The 10-year warranty covers manufacturing defects, battery, and firmware support.</p>
+          </details>
+          <details>
+            <summary>Does my data leave the device?</summary>
+            <p>Only if you choose to sync. The band stores the last 20 sessions locally. The companion app adds cloud sync and sharing, both optional and revocable.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div>
+        <div class="word">Verti<i>Band.</i></div>
+        <p>Precision vestibular therapy, built for home. Designed and assembled in Texas.</p>
+        <form style="margin-top:32px;display:flex;gap:8px;max-width:340px;" onsubmit="event.preventDefault();this.querySelector('button').textContent='Thanks';">
+          <input type="email" required placeholder="you@email.com" style="flex:1;padding:12px 14px;border:1px solid var(--hair-2);background:transparent;border-radius:999px;font:400 14px/1 var(--body);color:var(--ink);outline:none;" aria-label="Email">
+          <button type="submit" style="padding:12px 18px;border-radius:999px;background:var(--ink);color:var(--paper);border:1px solid var(--ink);font:500 12px/1 var(--mono);letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;">Notify</button>
+        </form>
+      </div>
+      <div>
+        <h5>Product</h5>
+        <ul><li><a href="#device">The device</a></li><li><a href="#app">The app</a></li><li><a href="#compare">Compare</a></li><li><a href="#reserve">Reserve</a></li></ul>
+      </div>
+      <div>
+        <h5>Science</h5>
+        <ul><li><a href="#method">Method</a></li><li><a href="#evidence">Evidence</a></li><li><a href="for-clinicians.html">For clinicians</a></li><li><a href="live-gyro.html">Live demo</a></li></ul>
+      </div>
+      <div>
+        <h5>Company</h5>
+        <ul><li><a href="#team">Team</a></li><li><a href="#faq">FAQ</a></li><li><a>Press</a></li><li><a href="mailto:hello@vertiband.com">hello@vertiband.com</a></li></ul>
+      </div>
+    </div>
+    <div class="wrap meta">
+      <span>© 2026 VertiBand Inc. · Research prototype · Not a medical device</span>
+      <span>V—01 · patent pending</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // scroll-spy: rail + bar highlight the section currently in view
+  (function(){
+    const links = document.querySelectorAll('.rail .idx a');
+    const byTarget = {};
+    links.forEach(a => byTarget[a.dataset.target] = a);
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = e.target.dataset.section;
+          links.forEach(l => l.classList.remove('on'));
+          if (byTarget[id]) byTarget[id].classList.add('on');
+        }
+      });
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    document.querySelectorAll('[data-section]').forEach(s => io.observe(s));
+  })();
+
+  // reveal-on-scroll: hide first, observe, fade in. Safety net forces visibility on load.
+  (function(){
+    const targets = document.querySelectorAll('.reveal, h2.display, .fact, .stage-l, .card-v, .phone, .prompt, .quote');
+    targets.forEach(t => { t.classList.add('reveal', 'pre'); });
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) { e.target.classList.remove('pre'); e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+      targets.forEach(t => io.observe(t));
+    }
+    // safety net: anything still hidden after 1.5s gets shown
+    setTimeout(() => {
+      document.querySelectorAll('.reveal.pre').forEach(el => { el.classList.remove('pre'); el.classList.add('in'); });
+    }, 1500);
+  })();
+
+  // smooth scroll for rail/bar anchors
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if (el) { e.preventDefault(); window.scrollTo({ top: el.offsetTop - 10, behavior: 'smooth' }); }
+    });
+  });
+
+  // GSAP + Lenis + ScrollTrigger: the full cinematic stack
+  (function(){
+    if (typeof gsap === 'undefined' || typeof Lenis === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Lenis smooth scroll (the secret sauce behind Ochi/Sundown/Halo-dental feel)
+    const lenis = new Lenis({ duration: 1.1, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    gsap.ticker.lagSmoothing(0);
+
+    if (reduced) return; // below here: motion
+
+    // Intercept anchor clicks and use Lenis scrollTo
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href');
+        if (id.length < 2) return;
+        const el = document.querySelector(id);
+        if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: -20 }); }
+      });
+    });
+
+    // Stagger slide-up on cards/rows. y-only (alpha left alone so nothing stays invisible if
+    // a trigger silently fails).
+    const groups = [
+      { sel: '.fact',             y: 40, d: 0.08 },
+      { sel: '.stage-l',          y: 40, d: 0.12 },
+      { sel: '.card-v',           y: 40, d: 0.10 },
+      { sel: '.prompt',           y: 30, d: 0.08 },
+      { sel: '.teamcard',         y: 30, d: 0.14 },
+      { sel: '.compare tbody tr', y: 16, d: 0.06 },
+      { sel: '.phone',            y: 60, d: 0.14 },
+    ];
+    groups.forEach(g => {
+      gsap.utils.toArray(g.sel).forEach((el, i) => {
+        gsap.from(el, {
+          y: g.y, duration: 0.9, ease: 'expo.out',
+          scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+          delay: i * g.d,
+        });
+      });
+    });
+
+    // Headline word-level reveal. Preserve inline HTML (e.g. <i>) — split only raw text nodes.
+    document.querySelectorAll('h2.display').forEach(h => {
+      // If this heading was already split via CSS .line markup, skip it.
+      if (h.querySelector('.line, .l1, .l2, .w')) return;
+      const walk = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const frag = document.createDocumentFragment();
+          const parts = node.textContent.split(/(\s+)/);
+          parts.forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); }
+            else {
+              const outer = document.createElement('span'); outer.className = 'wr';
+              const inner = document.createElement('span'); inner.className = 'wi';
+              inner.textContent = part; outer.appendChild(inner); frag.appendChild(outer);
+            }
+          });
+          node.parentNode.replaceChild(frag, node);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          Array.from(node.childNodes).forEach(walk);
+        }
+      };
+      walk(h);
+      const targets = h.querySelectorAll('.wi');
+      if (!targets.length) return;
+      gsap.set(h.querySelectorAll('.wr'), { display: 'inline-block', overflow: 'hidden', verticalAlign: 'bottom' });
+      gsap.from(targets, {
+        yPercent: 110,
+        duration: 0.9, ease: 'expo.out',
+        stagger: 0.04,
+        scrollTrigger: { trigger: h, start: 'top 85%', once: true },
+      });
+    });
+
+    // Parallax on the device photo inside the device section
+    gsap.utils.toArray('.device .photo').forEach(p => {
+      gsap.to(p.querySelector('img'), {
+        yPercent: -8, ease: 'none',
+        scrollTrigger: { trigger: p, start: 'top bottom', end: 'bottom top', scrub: 0.5 },
+      });
+    });
+
+    // Halo-style section-divider marquees
+    ['#marq-1', '#marq-2'].forEach((id, i) => {
+      const el = document.querySelector(id);
+      if (!el) return;
+      const dir = i === 0 ? -1 : 1;
+      gsap.to(el, { xPercent: dir * 50, duration: 55, ease: 'none', repeat: -1 });
+    });
+
+    // Ticker horizontal loop — replace CSS animation with GSAP (buttery + pausable)
+    const tickRow = document.querySelector('.ticker .row');
+    if (tickRow) {
+      tickRow.style.animation = 'none';
+      const tween = gsap.to(tickRow, { xPercent: -50, duration: 45, ease: 'none', repeat: -1 });
+      tickRow.addEventListener('pointerenter', () => tween.timeScale(0.25));
+      tickRow.addEventListener('pointerleave', () => tween.timeScale(1));
+    }
+
+    // Hero pin + scroll-scrubbed zoom (Apple AirPods Pro / Halo hero trick)
+    const film = document.querySelector('.film');
+    if (film) {
+      const va = document.getElementById('hero-film-a');
+      const vb = document.getElementById('hero-film-b');
+      const inner = film.querySelector('.inner');
+      const scrim = film.querySelector('.scrim');
+      const heroPin = gsap.timeline({
+        scrollTrigger: {
+          trigger: film, start: 'top top', end: '+=120%',
+          pin: true, scrub: 0.8, anticipatePin: 1,
+        },
+      });
+      [va, vb].forEach(v => v && heroPin.to(v, { scale: 1.18, ease: 'none' }, 0));
+      heroPin.to(inner, { y: -60, autoAlpha: 0.25, ease: 'none' }, 0);
+      heroPin.to(scrim, { opacity: 1, ease: 'none' }, 0);
+    }
+
+    // Hover magnetic pull on primary CTAs
+    document.querySelectorAll('.btn.primary, .film .topbar .cta').forEach(btn => {
+      btn.addEventListener('pointermove', (e) => {
+        const r = btn.getBoundingClientRect();
+        const dx = (e.clientX - r.left - r.width/2) * 0.25;
+        const dy = (e.clientY - r.top  - r.height/2) * 0.25;
+        gsap.to(btn, { x: dx, y: dy, duration: 0.3, ease: 'power3.out' });
+      });
+      btn.addEventListener('pointerleave', () => {
+        gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.4)' });
+      });
+    });
+
+    // Lede paragraph: split into words, fade each as user scrolls through
+    document.querySelectorAll('.lede').forEach(p => {
+      if (p.querySelector('.w')) return;
+      const walk = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const frag = document.createDocumentFragment();
+          node.textContent.split(/(\s+)/).forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) frag.appendChild(document.createTextNode(part));
+            else {
+              const s = document.createElement('span'); s.className = 'w'; s.textContent = part;
+              frag.appendChild(s);
+            }
+          });
+          node.parentNode.replaceChild(frag, node);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          Array.from(node.childNodes).forEach(walk);
+        }
+      };
+      walk(p);
+      const words = p.querySelectorAll('.w');
+      gsap.to(words, {
+        opacity: 1, stagger: 0.02,
+        scrollTrigger: { trigger: p, start: 'top 80%', end: 'bottom 60%', scrub: 0.6 },
+      });
+    });
+
+    // Section-number eyebrow scramble on hover
+    const GLYPHS = '█▓▒░0123456789ABCDEF·';
+    document.querySelectorAll('.eye').forEach(el => {
+      const original = el.textContent;
+      let raf;
+      function scramble(duration){
+        const t0 = performance.now();
+        (function loop(){
+          const u = Math.min(1, (performance.now() - t0) / duration);
+          const settled = Math.floor(original.length * u);
+          let out = original.slice(0, settled);
+          for (let i = settled; i < original.length; i++) {
+            out += GLYPHS[(Math.random() * GLYPHS.length) | 0];
+          }
+          el.textContent = out;
+          if (u < 1) raf = requestAnimationFrame(loop);
+          else el.textContent = original;
+        })();
+      }
+      el.addEventListener('pointerenter', () => { cancelAnimationFrame(raf); scramble(420); });
+    });
+
+    // Custom cursor
+    const cur = document.getElementById('cursor');
+    if (cur) {
+      const pos = { x: -100, y: -100 };
+      const render = () => { gsap.set(cur, { x: pos.x, y: pos.y }); requestAnimationFrame(render); };
+      window.addEventListener('pointermove', e => { pos.x = e.clientX; pos.y = e.clientY; });
+      document.body.addEventListener('pointerleave', () => cur.classList.add('hide'));
+      document.body.addEventListener('pointerenter', () => cur.classList.remove('hide'));
+      document.querySelectorAll('a, button, summary, select, input, .card-v, .teamcard, .prompt').forEach(el => {
+        el.addEventListener('pointerenter', () => cur.classList.add('lg'));
+        el.addEventListener('pointerleave', () => cur.classList.remove('lg'));
+      });
+      render();
+    }
+  })();
+
+  // Split headline text into line-by-line rise animations
+  (function(){
+    document.querySelectorAll('h2.display').forEach(h => {
+      if (h.querySelector('.line')) return; // already split
+      const parts = h.innerHTML.split('<br>');
+      h.innerHTML = parts.map(p => `<span class="line"><span>${p}</span></span>`).join('');
+    });
+  })();
+
+  // Magnetic glow on primary buttons — CSS vars track cursor
+  (function(){
+    document.querySelectorAll('.btn.primary').forEach(btn => {
+      btn.addEventListener('pointermove', (e) => {
+        const r = btn.getBoundingClientRect();
+        btn.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        btn.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+      btn.addEventListener('pointerleave', () => {
+        btn.style.setProperty('--mx', '50%'); btn.style.setProperty('--my', '50%');
+      });
+    });
+  })();
+
+  // Subtle 3D tilt on the device photo as you move the cursor across it
+  (function(){
+    const photo = document.querySelector('.device .photo');
+    if (!photo) return;
+    photo.addEventListener('pointermove', (e) => {
+      const r = photo.getBoundingClientRect();
+      const tx = ((e.clientX - r.left) / r.width - 0.5);
+      const ty = ((e.clientY - r.top)  / r.height - 0.5);
+      photo.style.setProperty('--tx', tx.toFixed(3));
+      photo.style.setProperty('--ty', ty.toFixed(3));
+    });
+    photo.addEventListener('pointerleave', () => {
+      photo.style.setProperty('--tx', 0); photo.style.setProperty('--ty', 0);
+    });
+  })();
+
+  // Number count-up when a metric scrolls into view
+  (function(){
+    const els = document.querySelectorAll('[data-count]');
+    if (!els.length) return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function run(el){
+      const target = parseFloat(el.dataset.count);
+      const dec = parseInt(el.dataset.decimals || '0', 10);
+      const prefix = el.dataset.prefix || '';
+      const suffix = el.dataset.suffix || '';
+      if (reduced) { el.textContent = prefix + target.toFixed(dec) + suffix; return; }
+      const dur = 1400;
+      const t0 = performance.now();
+      function step(t){
+        const u = Math.min(1, (t - t0) / dur);
+        const eased = 1 - Math.pow(1 - u, 3);
+        const val = (target * eased).toFixed(dec);
+        el.textContent = prefix + val + suffix;
+        if (u < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { run(e.target); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.35 });
+    els.forEach(el => io.observe(el));
+  })();
+
+  // Hero video: 3-clip seamless crossfade rotation. Unavailable clips
+  // (404 or load error) are auto-dropped so the rotation still works if
+  // only one or two MP4s are present.
+  (function(){
+    const nodes = [
+      document.getElementById('hero-film-a'),
+      document.getElementById('hero-film-b'),
+      document.getElementById('hero-film-c'),
+    ].filter(Boolean);
+    if (!nodes.length) return;
+
+    const CROSSFADE = 1.9; // seconds before end, start the handoff
+    const SPEED = 1.0;
+
+    // Filter out clips that error (missing source, can't decode).
+    const ready = [];
+    let initialized = false;
+
+    function init(){
+      if (initialized || !ready.length) return;
+      initialized = true;
+      // Fade in the first available clip as active.
+      ready[0].classList.add('shown');
+      try { ready[0].play(); } catch(_){}
+      let activeIdx = 0;
+      let swapArmed = false;
+
+      function tick(){
+        const active = ready[activeIdx];
+        if (!active.duration || isNaN(active.duration)) { requestAnimationFrame(tick); return; }
+
+        const remaining = active.duration - active.currentTime;
+        const prog = document.getElementById('film-prog');
+        if (prog) prog.style.width = (100 * active.currentTime / active.duration).toFixed(1) + '%';
+        const tc = document.getElementById('film-tc');
+        if (tc) {
+          const t = Math.floor(active.currentTime);
+          tc.textContent = String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0');
+        }
+
+        if (!swapArmed && remaining <= CROSSFADE) {
+          swapArmed = true;
+          const nextIdx = (activeIdx + 1) % ready.length;
+          const next = ready[nextIdx];
+
+          // INTELLIGENT HANDOFF — the next clip appears to "stem from" the
+          // outgoing one. Kill the CSS breathe animation during the handoff
+          // so our GSAP transforms aren't fighting it, then:
+          //  • Outgoing clip continues its push-in slightly, then fades.
+          //  • Incoming clip starts already-zoomed and "lifts" toward neutral
+          //    while fading up — camera reads as one continuous move.
+          if (typeof gsap !== 'undefined') {
+            gsap.set(next, { clearProps: 'animation' });
+            gsap.killTweensOf([active, next]);
+
+            // Incoming clip pre-state: minimal scale nudge + shift, invisible.
+            // Keep scales near 1.0 so the source video isn't upscaled hard.
+            next.style.animation = 'none';
+            gsap.set(next, { scale: 1.05, yPercent: 2, autoAlpha: 0, force3D: true });
+
+            // Start it playing from the beginning
+            try { next.currentTime = 0; next.play(); } catch(_){}
+
+            // Outgoing: tiny continuation then fade
+            gsap.to(active, {
+              scale: '+=0.02', yPercent: '-=0.8', autoAlpha: 0,
+              duration: CROSSFADE, ease: 'power2.inOut', force3D: true,
+            });
+
+            // Incoming: settle to neutral + fade in
+            gsap.to(next, {
+              scale: 1.00, yPercent: 0, autoAlpha: 1,
+              duration: CROSSFADE, ease: 'power2.inOut', force3D: true,
+              onComplete: () => {
+                next.style.animation = '';
+              },
+            });
+            next.classList.add('shown');
+            active.classList.remove('shown');
+          } else {
+            try { next.currentTime = 0; next.play(); } catch(_){}
+            next.classList.add('shown');
+            active.classList.remove('shown');
+          }
+
+          setTimeout(() => {
+            active.pause();
+            if (typeof gsap !== 'undefined') gsap.set(active, { clearProps: 'all' });
+            activeIdx = nextIdx;
+            swapArmed = false;
+          }, CROSSFADE * 1000);
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    nodes.forEach(v => {
+      try { v.playbackRate = SPEED; v.muted = true; } catch(_){}
+      v.addEventListener('loadeddata', () => {
+        if (!ready.includes(v)) ready.push(v);
+        init();
+      }, { once: true });
+      v.addEventListener('error', () => { /* dropped from rotation */ }, { once: true });
+      // If already loaded by the time we attach the listener:
+      if (v.readyState >= 2) { if (!ready.includes(v)) ready.push(v); init(); }
+    });
+
+    // Mute toggle controls every layer.
+    const mt = document.getElementById('mute-toggle');
+    if (mt) mt.addEventListener('click', () => {
+      const nextMuted = !nodes[0].muted;
+      nodes.forEach(v => v.muted = nextMuted);
+      mt.textContent = nextMuted ? '🔇' : '🔊';
+      if (!nextMuted && ready.length) { try { ready[0].play(); } catch(_){} }
+    });
+  })();
+
+  // Hero pose-overlay: quiet, accurate animation of a full Epley cycle.
+  // Respects prefers-reduced-motion: renders a single static frame if set.
+  (function(){
+    const c = document.getElementById('hero-pose');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const W = c.width, H = c.height;
+    // Epley targets: (pitch, roll) in degrees, per step
+    const targets = [
+      { p: 0,   r: 0,   hold: 2.0, label: 'S1' },
+      { p: -28, r: 0,   hold: 2.6, label: 'S2' },
+      { p: -28, r: 0,   hold: 2.2, label: 'S3' },
+      { p: -28, r: -40, hold: 2.2, label: 'S4' },
+      { p: 0,   r: 0,   hold: 1.8, label: 'S5' },
+    ];
+    const transit = 1.0;
+    let prev = { p: 0, r: 0 };
+    let schedule = [];
+    let t0 = 0;
+    targets.forEach((tgt, i) => {
+      const from = (i === 0) ? { p: 0, r: 0 } : { p: targets[i-1].p, r: targets[i-1].r };
+      schedule.push({ kind: 'move', from, to: tgt, start: t0, dur: transit });
+      t0 += transit;
+      schedule.push({ kind: 'hold', pose: tgt, start: t0, dur: tgt.hold });
+      t0 += tgt.hold;
+    });
+    const total = t0 + 0.8;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function poseAt(t){
+      t = t % total;
+      for (const seg of schedule){
+        if (t >= seg.start && t < seg.start + seg.dur){
+          if (seg.kind === 'hold') return { p: seg.pose.p, r: seg.pose.r };
+          const u = (t - seg.start) / seg.dur;
+          const s = u * u * (3 - 2*u);
+          return { p: seg.from.p + (seg.to.p - seg.from.p) * s,
+                   r: seg.from.r + (seg.to.r - seg.from.r) * s };
+        }
+      }
+      return { p: 0, r: 0 };
+    }
+    function draw(){
+      const t = (performance.now() / 1000) - T0;
+      const pose = reduced ? { p: -28, r: 0 } : poseAt(t);
+      ctx.clearRect(0,0,W,H);
+      // grid
+      ctx.strokeStyle = 'rgba(247,241,232,0.10)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 6; i++){
+        ctx.beginPath(); ctx.moveTo(0, i*H/6); ctx.lineTo(W, i*H/6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(i*W/6, 0); ctx.lineTo(i*W/6, H); ctx.stroke();
+      }
+      // axes
+      ctx.strokeStyle = 'rgba(247,241,232,0.22)';
+      ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+      // tolerance box for current target (find the current target)
+      const scale = Math.min(W,H) / 120;
+      let curTgt = { p: 0, r: 0 };
+      const tt = t % total;
+      for (const seg of schedule){
+        if (tt >= seg.start && tt < seg.start + seg.dur){
+          curTgt = seg.kind === 'hold' ? { p: seg.pose.p, r: seg.pose.r } : { p: seg.to.p, r: seg.to.r };
+          break;
+        }
+      }
+      const tx = W/2 + curTgt.r * scale;
+      const ty = H/2 - curTgt.p * scale;
+      const tol = 15 * scale;
+      ctx.strokeStyle = 'rgba(200,90,58,0.5)';
+      ctx.setLineDash([3,3]);
+      ctx.strokeRect(tx - tol, ty - tol, tol*2, tol*2);
+      ctx.setLineDash([]);
+      // target dot
+      ctx.fillStyle = 'rgba(200,90,58,0.8)';
+      ctx.beginPath(); ctx.arc(tx, ty, 2.5, 0, Math.PI*2); ctx.fill();
+      // current pose
+      const x = W/2 + pose.r * scale;
+      const y = H/2 - pose.p * scale;
+      ctx.shadowColor = 'rgba(200,90,58,0.7)'; ctx.shadowBlur = 10;
+      ctx.fillStyle = '#F7F1E8';
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      if (!reduced) requestAnimationFrame(draw);
+    }
+    const T0 = performance.now() / 1000;
+    draw();
+  })();
+</script>
+
+</body>
+</html>

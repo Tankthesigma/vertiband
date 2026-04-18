@@ -1,0 +1,41 @@
+:root {
+  /* Halo-inspired warm cream + deep ink. Nothing electric, nothing yellow. */
+  --paper:    #F7F1E8;
+  --paper-2:  #EFE8DA;
+  --paper-3:  #E3DBC9;
+  --ink:      #1D2C38;
+  --ink-2:    #243443;
+  --ink-3:    #2F4050;
+  --panel:    #1A2832;
+  --hair:     rgba(29,44,56,0.10);
+  --hair-2:   rgba(29,44,56,0.22);
+  --hair-d:   rgba(247,241,232,0.12);
+  --hair-d2:  rgba(247,241,232,0.22);
+
+  /* text on paper */
+  --fg-1:   #1D2C38;
+  --fg-2:   #4A5A68;
+  --fg-3:   #8A8372;
+
+  /* text on ink */
+  --fg-d1:  #F7F1E8;
+  --fg-d2:  #B8B0A0;
+  --fg-d3:  #7A7465;
+
+  /* ONE muted accent — terracotta/rust, warm not electric */
+  --signal:      #C85A3A;
+  --signal-glow: rgba(200,90,58,0.35);
+  --signal-soft: rgba(200,90,58,0.10);
+
+  /* supporting */
+  --success: #4A8B6F;
+  --danger:  #B84A3A;
+
+  /* type */
+  --display: "Fraunces", ui-serif, Georgia, serif;
+  --body:    "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mono:    "JetBrains Mono", ui-monospace, monospace;
+
+  /* motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

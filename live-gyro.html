@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>VertiBand · Try it live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;overscroll-behavior:none;}
+  header{padding:22px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(29,44,56,0.08);}
+  .word{font-family:Fraunces,serif;font-weight:400;font-size:22px;font-style:italic;letter-spacing:-0.015em;}
+  .word b{font-weight:500;font-style:normal;}
+  .eye{font:500 10px/1 JetBrains Mono,monospace;letter-spacing:0.2em;text-transform:uppercase;color:#6B7687;}
+  main{padding:32px 24px 80px;max-width:640px;margin:0 auto;text-align:center;}
+  h1{font:300 clamp(36px,8vw,56px)/1.05 Fraunces,serif;letter-spacing:-0.03em;margin:16px 0 18px;}
+  h1 i{font-weight:400;color:#3A4A5E;}
+  p.lede{font-size:16px;line-height:1.55;color:#3A4A5E;margin:0 0 28px;}
+
+  .stage{
+    position:relative;aspect-ratio:1/1;max-width:400px;margin:0 auto;
+    background:#0F1626;border-radius:20px;overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .stage canvas{width:100%;height:100%;display:block;}
+  .stage .status{
+    position:absolute;top:16px;left:16px;
+    font:500 10px/1 JetBrains Mono,monospace;letter-spacing:0.18em;text-transform:uppercase;
+    color:#AEB7C8;display:flex;align-items:center;gap:8px;
+  }
+  .stage .status .dot{width:8px;height:8px;border-radius:50%;background:#6E7A8F;}
+  .stage .status.good .dot{background:#3ACF8E;box-shadow:0 0 10px rgba(58,207,142,0.7);}
+  .stage .status.good{color:#3ACF8E;}
+  .stage .readout{
+    position:absolute;bottom:14px;left:16px;right:16px;
+    font:500 11px/1.4 JetBrains Mono,monospace;letter-spacing:0.08em;
+    color:#AEB7C8;display:flex;justify-content:space-between;
+  }
+  .stage .readout .v{color:#F2F5FA;font-size:15px;font-weight:600;letter-spacing:-0.01em;}
+
+  .btn{
+    margin-top:28px;padding:16px 26px;border-radius:999px;border:0;cursor:pointer;
+    font:500 13px/1 Inter,sans-serif;letter-spacing:0.08em;text-transform:uppercase;
+    background:#1D2C38;color:#F7F1E8;
+  }
+  .btn:hover{background:#C85A3A;}
+  .btn[disabled]{opacity:0.5;cursor:not-allowed;}
+
+  .hint{margin-top:24px;font-size:13px;color:#6B7687;line-height:1.6;max-width:420px;margin-left:auto;margin-right:auto;}
+  .err{color:#B84A3A;}
+  .footer{text-align:center;margin-top:56px;font:500 10px/1 JetBrains Mono,monospace;letter-spacing:0.2em;text-transform:uppercase;color:#8A8372;}
+  .back{color:#3A4A5E;text-decoration:none;}
+  .back:hover{color:#C85A3A;}
+</style>
+</head><body>
+
+<header>
+  <span class="word">Verti<b>Band</b><i>.</i></span>
+  <a class="back" href="/">← Back</a>
+</header>
+
+<main>
+  <div class="eye">Live demo · 01</div>
+  <h1>Be the <i>sensor.</i></h1>
+  <p class="lede">Hold this phone flat against your forehead like a headband. Tilt your head. The target box will turn green when you hold within ±15° of the Epley step 2 pose — exactly how VertiBand verifies each stage in real time.</p>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" width="800" height="800" aria-hidden="true"></canvas>
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">Awaiting permission</span></div>
+    <div class="readout">
+      <div><div>Pitch</div><div class="v" id="pitch">—</div></div>
+      <div><div>Roll</div><div class="v" id="roll">—</div></div>
+      <div><div>Yaw</div><div class="v" id="yaw">—</div></div>
+    </div>
+  </div>
+
+  <button class="btn" id="enable">Enable motion</button>
+  <div class="hint" id="hint">On iPhone you'll see a one-time permission prompt. Android granted by default. Works best in portrait held flat to your forehead.</div>
+</main>
+
+<div class="footer">VertiBand · research prototype · not a medical device</div>
+
+<script>
+(function(){
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const st = document.getElementById('status');
+  const stxt = document.getElementById('statusText');
+  const $p = document.getElementById('pitch');
+  const $r = document.getElementById('roll');
+  const $y = document.getElementById('yaw');
+  const btn = document.getElementById('enable');
+  const hint = document.getElementById('hint');
+
+  // Target: Step 2 of Epley (Dix-Hallpike): pitch -30°, roll 0°, yaw ±45°
+  const TARGET = { pitch: -30, roll: 0, yaw: 45 };
+  const TOL = 15;
+
+  let cur = { p: 0, r: 0, y: 0 };
+  let goal = cur;
+  function handleOrient(e){
+    // Normalize values: alpha = yaw [0..360], beta = pitch [-180..180], gamma = roll [-90..90]
+    const y = (e.alpha != null) ? ((e.alpha + 180) % 360) - 180 : 0;
+    const p = (e.beta  != null) ? e.beta - 90 : 0;  // -90 to make "phone flat on forehead" read as 0 pitch
+    const r = (e.gamma != null) ? e.gamma : 0;
+    goal = { p: Math.max(-90, Math.min(90, p)), r, y: Math.max(-90, Math.min(90, y)) };
+  }
+
+  function enable(){
+    btn.disabled = true; stxt.textContent = 'Requesting…';
+    const start = () => {
+      window.addEventListener('deviceorientation', handleOrient, true);
+      stxt.textContent = 'Move your head'; btn.style.display = 'none';
+    };
+    if (typeof DeviceOrientationEvent !== 'undefined'
+        && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(res => {
+        if (res === 'granted') start();
+        else { stxt.textContent = 'Permission denied'; hint.classList.add('err'); hint.textContent = 'iOS blocked motion access. Try Safari.'; btn.disabled = false; }
+      }).catch(() => { stxt.textContent = 'Error'; btn.disabled = false; });
+    } else if (typeof DeviceOrientationEvent !== 'undefined') {
+      start();
+    } else {
+      stxt.textContent = 'No motion sensor'; hint.classList.add('err');
+      hint.textContent = 'This device has no motion sensor. Open on a phone.';
+    }
+  }
+  btn.addEventListener('click', enable);
+
+  // Render loop: smoothly interpolate to the latest orientation
+  function render(){
+    // lerp
+    cur.p += (goal.p - cur.p) * 0.18;
+    cur.r += (goal.r - cur.r) * 0.18;
+    cur.y += (goal.y - cur.y) * 0.18;
+
+    const w = cv.width, h = cv.height;
+    ctx.clearRect(0,0,w,h);
+
+    // bg radial
+    const g = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, Math.max(w,h)/1.4);
+    g.addColorStop(0, 'rgba(200,90,58,0.08)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+    for (let i = 1; i < 10; i++){
+      ctx.beginPath(); ctx.moveTo(0, i*h/10); ctx.lineTo(w, i*h/10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i*w/10, 0); ctx.lineTo(i*w/10, h); ctx.stroke();
+    }
+    // axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
+
+    const scale = Math.min(w,h)/160; // 80 deg range
+
+    // target box
+    const within =
+      Math.abs(cur.p - TARGET.pitch) <= TOL &&
+      Math.abs(cur.r - TARGET.roll) <= TOL;
+    const tx = w/2 + TARGET.roll * scale;
+    const ty = h/2 - TARGET.pitch * scale;
+    const tol = TOL * scale;
+    ctx.strokeStyle = within ? 'rgba(58,207,142,0.9)' : 'rgba(200,90,58,0.7)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash(within ? [] : [6,6]);
+    ctx.strokeRect(tx - tol, ty - tol, tol*2, tol*2);
+    ctx.setLineDash([]);
+    // target dot
+    ctx.fillStyle = within ? 'rgba(58,207,142,1)' : 'rgba(200,90,58,0.9)';
+    ctx.beginPath(); ctx.arc(tx, ty, 5, 0, Math.PI*2); ctx.fill();
+
+    // current pose with glow
+    const x = w/2 + cur.r * scale;
+    const y = h/2 - cur.p * scale;
+    ctx.shadowColor = within ? 'rgba(58,207,142,0.9)' : 'rgba(247,241,232,0.6)';
+    ctx.shadowBlur = 24;
+    ctx.fillStyle = '#F2F5FA';
+    ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // update readouts
+    $p.textContent = cur.p.toFixed(1) + '°';
+    $r.textContent = cur.r.toFixed(1) + '°';
+    $y.textContent = cur.y.toFixed(0) + '°';
+
+    if (within) { st.classList.add('good'); stxt.textContent = 'Locked — step 2'; }
+    else if (stxt.textContent !== 'Awaiting permission' && stxt.textContent !== 'Requesting…') {
+      st.classList.remove('good'); stxt.textContent = 'Tracking · seek target';
+    }
+
+    requestAnimationFrame(render);
+  }
+  render();
+})();
+</script>
+</body></html>
