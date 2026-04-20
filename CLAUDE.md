@@ -38,3 +38,48 @@
 | #1504 | " | 🟣 | Added QR code widget to hero section linking to live gyroscope demo | ~513 |
 | #1503 | 8:39 AM | 🟣 | Clinical documentation page for healthcare provider audience | ~559 |
 </claude-mem-context>
+
+# Claude Code project notes
+
+**Read `HANDOFF.md` at the repo root first — it is the full project brief.**
+
+## What this repo is
+- Marketing site (`index.html`, `tokens.css`, `assets/`, `for-clinicians.html`,
+  `live-gyro.html`) — deployed automatically to `https://vertiband.us`
+  on every `git push` to `main`.
+- iOS companion app (`ios/` — SwiftUI, iOS 17+, XcodeGen spec in
+  `ios/project.yml`).
+
+## What is NOT in this repo
+- Raspberry Pi firmware lives on the device at `~/vertiband/` —
+  Pi IP `192.168.254.53`, user `zavierhayat`.
+- Gemini API keys + GCP ADC creds — never committed.
+
+## Working style
+- User prefers terse responses, short sentences.
+- Brand voice: clinically confident, specific numbers, no exclamation marks,
+  no emoji in product UI.
+- When you hit a blocker you can't resolve remotely (sudo password, App Store
+  sign-in, physical USB port, Apple ID), state it plainly and hand back.
+
+## Fast commands
+```sh
+ping -c 2 192.168.254.53                             # Pi
+curl -sS -o /dev/null -w "%{http_code}\n" https://vertiband.us
+ssh zavierhayat@192.168.254.53 'systemctl is-active vertiband-tts-panel'
+cd ios && ./bootstrap.sh    # on the Mac, generates Xcode project
+```
+
+## Remote Mac (this machine, if you are Claude on the Mac)
+- Hostname: `GHOST-NODE-0x00.lan`, user `tanmaydagoat`, LAN `192.168.254.245`
+- SSH key auth already set up from both Windows + Pi (same ed25519 pubkey)
+- Xcode may or may not be installed — check with `xcodebuild -version`. If
+  not, user has to install from Mac App Store (~15 GB, ~40 GB free disk needed).
+
+## Git
+- Remote: `github.com/Tankthesigma/vertiband`
+- `gh` CLI on the Windows dev machine is pre-authenticated.
+- On the Mac, may need `gh auth login` once — use device flow, user confirms
+  in browser.
+
+See `HANDOFF.md` for the full deep-dive.
