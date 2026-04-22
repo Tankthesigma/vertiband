@@ -881,6 +881,19 @@
   .word-fade .wi { opacity: 0.25; transition: opacity 520ms var(--ease); }
   .word-fade.in .wi { opacity: 1; }
 
+  /* Namma-style curtain overlay over hero/device/phone media. GSAP
+     animates its clip-path from a full cover down to a zero-height
+     strip at the bottom — reveals the image top-first. */
+  .media-curtain {
+    position: absolute; inset: 0; z-index: 5;
+    background: var(--paper-2);
+    pointer-events: none;
+    clip-path: inset(0 0 0 0);
+    will-change: clip-path;
+  }
+  .media-curtain.dark { background: var(--ink); }
+  .hero .right .stage, .device .photo, .appshow .phone, .teamcard .pic { position: relative; }
+
   /* Primary CTAs: magnetic cursor shimmer */
   .btn.primary, .film .inner .btn.primary {
     position: relative; overflow: hidden;
@@ -2144,6 +2157,59 @@
     }
     const T0 = performance.now() / 1000;
     draw();
+  })();
+
+  // ────────── NAMMA-STYLE: HERO BLUR-TO-CLEAR + MEDIA CURTAIN ─────
+  // Two moves pulled from studionamma.com that fit an editorial
+  // clinical site:
+  //   1. Hero h1 lines enter with filter:blur(10px) → blur(0), opacity
+  //      0 → 1, staggered. Much calmer than a y-rise, reads as a camera
+  //      pulling focus on the copy.
+  //   2. Every key media asset (hero product shot, device photo, each
+  //      phone mock, team photos) gets a paper-or-ink curtain overlay
+  //      that retracts upward via clip-path as the media enters view.
+  (function(){
+    if (typeof gsap === 'undefined') return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+
+    // 1. Hero blur-to-clear
+    const heroLines = document.querySelectorAll('.film .inner h1 .l1 > span, .film .inner h1 .l2 > span');
+    if (heroLines.length) {
+      heroLines.forEach(el => {
+        el.style.animation = 'none';
+        el.style.transform = 'none';
+      });
+      gsap.set(heroLines, { opacity: 0, filter: 'blur(10px)' });
+      gsap.to(heroLines, {
+        opacity: 1, filter: 'blur(0px)',
+        duration: 1.1, ease: 'power2.out',
+        stagger: 0.18, delay: 0.3,
+      });
+    }
+
+    // 2. Media curtain reveals
+    const mediaTargets = [
+      { sel: '.hero .right .stage', theme: 'dark' },
+      { sel: '.device .photo', theme: 'paper' },
+      { sel: '.appshow .phone', theme: 'dark' },
+      { sel: '.teamcard .pic', theme: 'paper' },
+    ];
+    mediaTargets.forEach(({ sel, theme }) => {
+      document.querySelectorAll(sel).forEach(el => {
+        // Skip if already curtained or if the parent hides overflow
+        if (el.querySelector(':scope > .media-curtain')) return;
+        const curtain = document.createElement('div');
+        curtain.className = 'media-curtain' + (theme === 'dark' ? ' dark' : '');
+        el.appendChild(curtain);
+        gsap.to(curtain, {
+          clipPath: 'inset(0% 0% 100% 0%)',
+          duration: 1.1,
+          ease: 'power3.inOut',
+          scrollTrigger: { trigger: el, start: 'top 82%', once: true },
+        });
+      });
+    });
   })();
 
   // ────────── BODY COPY PER-WORD FADE REVEAL ──────────
