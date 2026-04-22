@@ -1103,33 +1103,8 @@
     footer .wrap { grid-template-columns: 1fr !important; }
   }
 
-  /* ────────── AURA ORB — lagging cursor halo ────────── */
-  .aura {
-    position: fixed; top: 0; left: 0; width: 600px; height: 600px;
-    border-radius: 50%; pointer-events: none; z-index: 1;
-    background: radial-gradient(circle, rgba(200,90,58,0.22) 0%, rgba(200,90,58,0.08) 35%, transparent 68%);
-    mix-blend-mode: plus-lighter;
-    transform: translate3d(-9999px, -9999px, 0);
-    will-change: transform;
-    transition: opacity 600ms var(--ease);
-  }
-  .aura.dark {
-    background: radial-gradient(circle, rgba(94,212,229,0.18) 0%, rgba(94,212,229,0.06) 35%, transparent 68%);
-    mix-blend-mode: screen;
-  }
-  @media (hover: none), (pointer: coarse) { .aura { display: none; } }
-
-  /* ────────── SCROLL PROGRESS RAIL ────────── */
-  .scroll-rail {
-    position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60;
-    background: transparent; pointer-events: none;
-  }
-  .scroll-rail .bar {
-    width: 0%; height: 100%;
-    background: linear-gradient(90deg, var(--signal), rgba(200,90,58,0.35));
-    transition: width 120ms var(--ease);
-    box-shadow: 0 0 14px rgba(200,90,58,0.45);
-  }
+  /* (Aura orb + top scroll rail removed — they were bleeding a dark
+     strip and an orange blob across the top of the viewport.) */
 
   /* ────────── VELOCITY-REACTIVE MARQUEE ────────── */
   .marquee .strip {
@@ -1162,8 +1137,6 @@
 </head>
 <body>
 
-<div class="scroll-rail" aria-hidden="true"><div class="bar" id="scroll-rail-bar"></div></div>
-<div class="aura" id="aura" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"></div>
 
 
@@ -2210,52 +2183,6 @@
   (function(){
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = matchMedia('(hover: none), (pointer: coarse)').matches;
-
-    // ────────── 1. Aura orb — rAF-lerped cursor halo ──────────
-    const aura = document.getElementById('aura');
-    if (aura && !coarse && !reduced) {
-      let tx = innerWidth / 2, ty = innerHeight / 2;
-      let x = tx, y = ty;
-      addEventListener('pointermove', (e) => { tx = e.clientX; ty = e.clientY; }, { passive: true });
-      addEventListener('pointerleave', () => { aura.style.opacity = '0'; });
-      addEventListener('pointerenter', () => { aura.style.opacity = '1'; });
-      (function tick(){
-        x += (tx - x) * 0.11;
-        y += (ty - y) * 0.11;
-        aura.style.transform = `translate3d(${x - 300}px, ${y - 300}px, 0)`;
-        requestAnimationFrame(tick);
-      })();
-      // Flip the blend mode when the aura is over a dark section.
-      const darkSections = document.querySelectorAll('.appshow, .film, .marquee:not(.paper)');
-      const ioAura = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting && e.intersectionRatio > 0.5) aura.classList.add('dark');
-        });
-      }, { threshold: [0, 0.5, 1] });
-      // Simpler: check on scroll what section the center of the aura is over.
-      addEventListener('scroll', () => {
-        const cy = y;
-        let onDark = false;
-        darkSections.forEach(s => {
-          const r = s.getBoundingClientRect();
-          if (r.top <= cy && r.bottom >= cy) onDark = true;
-        });
-        aura.classList.toggle('dark', onDark);
-      }, { passive: true });
-    }
-
-    // ────────── 2. Scroll progress rail ──────────
-    const railBar = document.getElementById('scroll-rail-bar');
-    if (railBar) {
-      const update = () => {
-        const h = document.documentElement;
-        const max = h.scrollHeight - h.clientHeight;
-        const pct = max > 0 ? (h.scrollTop / max) * 100 : 0;
-        railBar.style.width = pct.toFixed(2) + '%';
-      };
-      addEventListener('scroll', update, { passive: true });
-      update();
-    }
 
     if (typeof gsap === 'undefined') return;
 
