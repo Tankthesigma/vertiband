@@ -874,25 +874,11 @@
     50% { box-shadow: 0 0 0 8px rgba(200,90,58,0); }
   }
 
-  /* Split-text heading support — each line inside h2.display can be split into span.l */
-  h2.display .line {
-    display: block; overflow: hidden;
-  }
-  h2.display .line > span {
-    display: inline-block; transform: translateY(100%);
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) {
-      h2.display .line > span {
-        animation: rise-line 900ms var(--ease) both;
-        animation-timeline: view();
-        animation-range: entry 0% entry 50%;
-      }
-      h2.display .line:nth-child(2) > span { animation-delay: 140ms; }
-      h2.display .line:nth-child(3) > span { animation-delay: 260ms; }
-      @keyframes rise-line { to { transform: translateY(0); } }
-    }
-  }
+  /* Body copy per-word fade — GSAP drives the stagger from 0.35→1. */
+  p.lede .wr, p.lede .wi, section .device .text p .wr, section .device .text p .wi,
+  .hero .lede .wr, .hero .lede .wi { display: inline-block; }
+  .word-fade .wi { opacity: 0.25; transition: opacity 520ms var(--ease); }
+  .word-fade.in .wi { opacity: 1; }
 
   /* Primary CTAs: magnetic cursor shimmer */
   .btn.primary, .film .inner .btn.primary {
@@ -1260,16 +1246,6 @@
     <div class="scroll-cue" aria-hidden="true">Scroll</div>
   </section>
 
-  <!-- bar -->
-  <div class="bar">
-    <span class="word">Verti<b>Band</b><i>.</i></span>
-    <div class="right-group">
-      <a class="link" href="#device">DEVICE</a>
-      <a class="link" href="#method">METHOD</a>
-      <a class="link" href="#evidence">EVIDENCE</a>
-      <a class="cta" href="#reserve">Reserve</a>
-    </div>
-  </div>
 
   <!-- OVERVIEW (below-the-fold split hero) -->
   <section class="hero" id="overview" data-section="overview">
@@ -1944,14 +1920,10 @@
     }
   })();
 
-  // Split headline text into line-by-line rise animations
-  (function(){
-    document.querySelectorAll('h2.display').forEach(h => {
-      if (h.querySelector('.line')) return; // already split
-      const parts = h.innerHTML.split('<br>');
-      h.innerHTML = parts.map(p => `<span class="line"><span>${p}</span></span>`).join('');
-    });
-  })();
+  // (Removed the legacy line-split pass — it conflicted with the word
+  // split above and left headlines like "Every maneuver has four phases"
+  // stuck at translateY(100%) on browsers without animation-timeline
+  // support. The word-level GSAP reveal now owns every h2.display.)
 
   // Magnetic glow on primary buttons — CSS vars track cursor
   (function(){
@@ -2218,6 +2190,53 @@
     }
     const T0 = performance.now() / 1000;
     draw();
+  })();
+
+  // ────────── BODY COPY PER-WORD FADE REVEAL ──────────
+  // Takes every .lede and long body <p> under a section headline and
+  // splits it into word spans that brighten from 0.25 to 1.0 with a
+  // fine stagger as the paragraph enters the viewport. Much calmer
+  // than a wholesale fade — reads like a camera pulling focus.
+  (function(){
+    if (typeof gsap === 'undefined') return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const targets = document.querySelectorAll(
+      '.hero .lede, .loop .lede, .team .lede, .problem .quote, .device .text > p, .appshow .head p'
+    );
+    targets.forEach(p => {
+      if (p.querySelector('.wi')) return;
+      const walk = (node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const frag = document.createDocumentFragment();
+          const parts = node.textContent.split(/(\s+)/);
+          parts.forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) {
+              frag.appendChild(document.createTextNode(part));
+            } else {
+              const outer = document.createElement('span'); outer.className = 'wr';
+              const inner = document.createElement('span'); inner.className = 'wi';
+              inner.textContent = part; outer.appendChild(inner); frag.appendChild(outer);
+            }
+          });
+          node.parentNode.replaceChild(frag, node);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          Array.from(node.childNodes).forEach(walk);
+        }
+      };
+      walk(p);
+      p.classList.add('word-fade');
+      if (reduced) { p.classList.add('in'); return; }
+      const words = p.querySelectorAll('.wi');
+      gsap.set(words, { opacity: 0.22 });
+      gsap.to(words, {
+        opacity: 1,
+        duration: 0.5,
+        ease: 'power2.out',
+        stagger: 0.02,
+        scrollTrigger: { trigger: p, start: 'top 82%', once: true },
+      });
+    });
   })();
 
   // ────────── AURA ORB + SCROLL RAIL + VELOCITY + SCRAMBLE + PIN ──────────
