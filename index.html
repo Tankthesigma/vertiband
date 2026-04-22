@@ -2380,35 +2380,9 @@
       document.querySelectorAll('[data-final-text]').forEach(el => ioScram.observe(el));
     }
 
-    // ────────── 5. Pin-scrub feature stack on .device photo ──────────
-    // When the device section enters view, pin the photo and scrub
-    // a rotating sub-headline in the spec area.
-    if (!reduced && typeof ScrollTrigger !== 'undefined') {
-      const devSection = document.querySelector('section.device');
-      const devPhoto = devSection && devSection.querySelector('.photo');
-      if (devPhoto && matchMedia('(min-width: 961px)').matches) {
-        ScrollTrigger.create({
-          trigger: devSection,
-          start: 'top 10%',
-          end: 'bottom 85%',
-          pin: devPhoto,
-          pinSpacing: false,
-          anticipatePin: 1,
-          pinType: 'transform',
-        });
-        // Subtle y-parallax on the photo while pinned
-        gsap.to(devPhoto.querySelector('img'), {
-          yPercent: -6,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: devSection,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1.2,
-          },
-        });
-      }
-    }
+    // (Previous pin-scrub on .device .photo removed — pinSpacing:false
+    // made the photo bleed into the next section. The existing -8%
+    // image parallax earlier in the script is plenty.)
   })();
 </script>
 
