@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMin slice">
+  <defs>
+    <style>
+      .paper { fill: #F7F1E8; }
+      .ink { fill: #1D2C38; }
+      .ink2 { fill: #243443; }
+      .fg2 { fill: #4A5A68; }
+      .fg3 { fill: #8A8372; }
+      .signal { fill: #C85A3A; }
+      .success { fill: #4A8B6F; }
+      .hair { stroke: rgba(29,44,56,0.10); }
+      .hair-fill { fill: rgba(29,44,56,0.06); }
+      .display { font-family: Georgia, "Times New Roman", serif; font-weight: 300; }
+      .display-i { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-weight: 400; }
+      .body { font-family: -apple-system, "SF Pro Text", Helvetica, Arial, sans-serif; }
+      .mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
+    </style>
+    <linearGradient id="sparkGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#C85A3A" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#C85A3A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Canvas -->
+  <rect class="paper" width="390" height="844"/>
+
+  <!-- iOS status bar -->
+  <text class="body" x="32" y="28" font-size="15" font-weight="600" fill="#1D2C38">9:41</text>
+  <g fill="#1D2C38" opacity="0.85">
+    <circle cx="310" cy="24" r="3"/>
+    <rect x="318" y="22" width="3" height="5" rx="0.5"/>
+    <rect x="324" y="19" width="3" height="8" rx="0.5"/>
+    <rect x="330" y="16" width="3" height="11" rx="0.5"/>
+    <rect x="348" y="18" width="22" height="10" rx="2.5" fill="none" stroke="#1D2C38" stroke-width="1"/>
+    <rect x="350" y="20" width="15" height="6" rx="1"/>
+  </g>
+
+  <!-- Header: brand mark + wordmark + status pill -->
+  <circle cx="48" cy="90" r="16" fill="#1D2C38"/>
+  <text class="display-i" x="48" y="96" font-size="18" text-anchor="middle" fill="#F7F1E8">V</text>
+  <text class="display" x="74" y="96" font-size="22">Verti<tspan font-weight="500">Band</tspan><tspan class="display-i" fill="#C85A3A">.</tspan></text>
+
+  <!-- Status pill: Band ready -->
+  <rect x="260" y="80" width="100" height="26" rx="13" fill="rgba(74,139,111,0.12)"/>
+  <circle cx="274" cy="93" r="3" class="success"/>
+  <text class="body" x="284" y="97" font-size="12" font-weight="600" fill="#4A8B6F">Band ready</text>
+
+  <!-- Chapter eyebrow -->
+  <rect x="24" y="144" width="24" height="1" class="signal"/>
+  <text class="mono" x="56" y="148" font-size="11" letter-spacing="2.4" font-weight="600" fill="#8A8372">V—01  ·  GOOD EVENING</text>
+
+  <!-- Editorial headline -->
+  <text class="display" x="24" y="208" font-size="44" letter-spacing="-1.2" fill="#1D2C38">Your band is</text>
+  <text class="display-i" x="24" y="254" font-size="44" letter-spacing="-1.2" fill="#243443">ready.</text>
+
+  <!-- Body copy -->
+  <text class="body" x="24" y="298" font-size="15" fill="#4A5A68">Press begin and your VertiBand will guide</text>
+  <text class="body" x="24" y="318" font-size="15" fill="#4A5A68">you through the Epley maneuver, verifying</text>
+  <text class="body" x="24" y="338" font-size="15" fill="#4A5A68">each position in real time.</text>
+
+  <!-- Primary CTA -->
+  <rect x="24" y="366" width="342" height="52" rx="26" fill="#1D2C38"/>
+  <text class="body" x="160" y="398" font-size="15" font-weight="600" fill="#F7F1E8">Begin session</text>
+  <text class="body" x="244" y="398" font-size="14" font-weight="600" fill="#F7F1E8">→</text>
+
+  <!-- Ghost secondary -->
+  <rect x="24" y="430" width="342" height="48" rx="24" fill="none" stroke="rgba(29,44,56,0.22)" stroke-width="1"/>
+  <text class="body" x="138" y="459" font-size="14" font-weight="600" fill="#1D2C38">Manage your VertiBand</text>
+
+  <!-- Stat row with hairline dividers -->
+  <text class="display" x="32" y="530" font-size="28" letter-spacing="-0.4" fill="#1D2C38">3</text>
+  <text class="mono" x="32" y="550" font-size="10" letter-spacing="1.4" font-weight="600" fill="#8A8372">MIN SESSION</text>
+
+  <rect x="130" y="508" width="1" height="36" class="hair-fill"/>
+  <text class="display" x="148" y="530" font-size="28" letter-spacing="-0.4" fill="#1D2C38">5</text>
+  <text class="mono" x="148" y="550" font-size="10" letter-spacing="1.4" font-weight="600" fill="#8A8372">GUIDED POSES</text>
+
+  <rect x="250" y="508" width="1" height="36" class="hair-fill"/>
+  <text class="display" x="270" y="530" font-size="28" letter-spacing="-0.4" fill="#1D2C38">71%</text>
+  <text class="mono" x="270" y="550" font-size="10" letter-spacing="1.4" font-weight="600" fill="#8A8372">BAND BATTERY</text>
+
+  <!-- Divider -->
+  <rect x="24" y="590" width="342" height="1" class="hair-fill"/>
+
+  <!-- Recovery section -->
+  <rect x="24" y="616" width="24" height="1" class="signal"/>
+  <text class="mono" x="56" y="620" font-size="11" letter-spacing="2.4" font-weight="600" fill="#8A8372">03  ·  YOUR RECOVERY</text>
+
+  <text class="display" x="24" y="664" font-size="28" letter-spacing="-0.4" fill="#1D2C38">Your trace</text>
+  <text class="display-i" x="152" y="664" font-size="28" letter-spacing="-0.4" fill="#243443">so far.</text>
+
+  <!-- Sparkline (trending up) -->
+  <path d="M 24 750 L 24 738" stroke="rgba(29,44,56,0.10)" stroke-dasharray="3 3"/>
+  <line x1="24" y1="744" x2="366" y2="744" stroke="rgba(29,44,56,0.10)" stroke-dasharray="3 3"/>
+  <path d="M 24 740 L 60 732 L 96 724 L 132 734 L 168 720 L 204 712 L 240 708 L 276 700 L 312 694 L 348 688"
+        fill="none" stroke="url(#sparkGrad)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="348" cy="688" r="5" class="signal"/>
+  <circle cx="348" cy="688" r="12" fill="#C85A3A" opacity="0.25"/>
+
+  <!-- Metric row -->
+  <text class="display" x="32" y="806" font-size="30" letter-spacing="-0.4" fill="#1D2C38">82</text>
+  <text class="mono" x="32" y="824" font-size="9" letter-spacing="1.4" font-weight="600" fill="#8A8372">AVG VERTISCORE</text>
+
+  <rect x="138" y="790" width="1" height="30" class="hair-fill"/>
+  <text class="display" x="156" y="806" font-size="30" letter-spacing="-0.4" fill="#C85A3A">A</text>
+  <text class="mono" x="156" y="824" font-size="9" letter-spacing="1.4" font-weight="600" fill="#8A8372">LAST GRADE</text>
+
+  <rect x="246" y="790" width="1" height="30" class="hair-fill"/>
+  <text class="display" x="264" y="806" font-size="30" letter-spacing="-0.4" fill="#1D2C38">7</text>
+  <text class="mono" x="264" y="824" font-size="9" letter-spacing="1.4" font-weight="600" fill="#8A8372">SESSIONS</text>
+</svg>

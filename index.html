@@ -991,6 +991,134 @@
     .compare tr { border-bottom: 1px solid var(--hair-2); padding: 16px 0; }
     .compare td { border: 0; padding: 6px 0; }
   }
+
+  /* ────────── MOBILE (≤720px) — editorial layout compressed ────────── */
+  @media (max-width: 720px) {
+    .wrap { padding: 0 22px; }
+
+    /* Bar: slim and visible, still shows the wordmark + CTA */
+    .bar { padding: 14px 22px; font-size: 11px; }
+    .bar .word { font-size: 18px; }
+    .bar a.cta { padding: 8px 14px; font-size: 11px; }
+
+    /* Film hero — shorter, tighter, no rail-adjacent nav */
+    .film { min-height: 92vh; }
+    .film .inner { padding: 0 22px 56px; gap: 22px; }
+    .film .topbar { padding: 18px 22px; }
+    .film .topbar .nav { display: none; }
+    .film h1 { font-size: clamp(40px, 11vw, 64px) !important; margin-bottom: 28px; }
+    .film .k { margin-bottom: 22px; }
+    .film .stats { grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .film .stats .v { font-size: 28px; }
+    .film .scroll-cue { display: none; }
+
+    /* Sections: compress vertical rhythm */
+    .problem, .loop, .valid, .appshow, .price-section, .gem, .team, .faq {
+      padding: 80px 0;
+    }
+    .device { padding: 72px 0; }
+    section.problem::before, section.loop::before, section.valid::before,
+    section.team::before, section.faq::before {
+      top: 48px; font-size: clamp(96px, 24vw, 140px);
+    }
+
+    /* Hero split */
+    .hero { padding: 40px 0 0; }
+    .hero .grid { min-height: auto; }
+    .hero .left { padding: 0 22px 48px; }
+    .hero h1 { font-size: clamp(40px, 11vw, 64px); margin-bottom: 28px; }
+    .hero .lede { font-size: 15px; margin-bottom: 28px; }
+    .hero .right { min-height: 360px; padding: 22px; }
+    .hero .caption { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .hero .caption .r { gap: 12px; }
+    .hero .caption .r .v { font-size: 20px; }
+
+    /* Problem: facts stack */
+    .problem .quote { font-size: clamp(28px, 7.5vw, 44px); margin-bottom: 56px; }
+    .problem .facts { grid-template-columns: 1fr !important; gap: 28px; }
+    .fact .n { font-size: 48px; }
+
+    /* Device photo + specs */
+    .device .photo { aspect-ratio: 1/1; }
+    .device .text p { font-size: 15px; margin-bottom: 28px; }
+    .specs .r { grid-template-columns: 1fr; gap: 4px; padding: 14px 0; }
+    .specs .r .k { font-size: 10px; }
+    .specs .r .v { margin-top: 4px; }
+
+    /* Loop stages: stack, bring the dot back inline */
+    .loop .lede { margin-bottom: 40px; font-size: 15px; }
+    .loop .stages { grid-template-columns: 1fr !important; }
+    .stage-l { padding: 28px 0; border-right: none; border-bottom: 1px solid var(--hair); }
+    .stage-l:last-child { border-bottom: none; }
+    .stage-l .dot { left: 0; top: -5px; }
+    .stage-l h3 { font-size: 22px; }
+
+    /* App showcase: swipeable phone row, no grid squish */
+    .appshow .head { margin-bottom: 44px; }
+    .appshow .head p { font-size: 15px; }
+    .phones {
+      display: flex !important; gap: 18px;
+      overflow-x: auto; scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch; padding: 4px 0 18px;
+      margin: 0 -22px; padding-left: 22px; padding-right: 22px;
+      scrollbar-width: none;
+    }
+    .phones::-webkit-scrollbar { display: none; }
+    .phones .phone {
+      flex: 0 0 78%; max-width: 320px; scroll-snap-align: center;
+    }
+
+    /* Validation cards: single column */
+    .valid h2 { margin-bottom: 44px; }
+    .valid .list { grid-template-columns: 1fr !important; gap: 14px; }
+    .card-v { padding: 28px 24px 30px; }
+    .card-v h4 { font-size: 20px; }
+
+    /* Price section */
+    .price-section .wrap { grid-template-columns: 1fr !important; gap: 40px; }
+    .price-section h2 { font-size: clamp(88px, 28vw, 160px); margin-bottom: 20px; }
+    .price-section .sub { font-size: 15px; margin-bottom: 28px; }
+
+    /* Team */
+    .team .lede { margin-bottom: 44px; font-size: 15px; }
+    .team .grid { gap: 48px; }
+    .teamcard .pic { max-width: 140px; }
+
+    /* Press row */
+    .press blockquote { font-size: clamp(22px, 5.5vw, 32px) !important; }
+
+    /* FAQ */
+    .faq h2 { margin-bottom: 40px; }
+
+    /* Footer: 2-column condensed */
+    footer { padding: 64px 0 36px; }
+    footer .wrap { grid-template-columns: 1fr 1fr !important; gap: 32px 24px; }
+    footer .word { font-size: 36px; }
+    footer p { font-size: 13px; }
+
+    /* Marquee text smaller so dots don't dominate */
+    .marquee { padding: 22px 0; }
+    .marquee .strip {
+      font-size: clamp(28px, 10vw, 44px);
+      gap: 28px;
+    }
+    .marquee .strip span { gap: 28px; }
+    .marquee .strip .dot { width: 8px; height: 8px; }
+
+    /* Ticker quieter */
+    .ticker .row { font-size: 10px; letter-spacing: 0.18em; padding: 14px 0; gap: 32px; }
+
+    /* Eyebrows + section heads */
+    .eye { margin-bottom: 22px; }
+    h2.display { font-size: clamp(34px, 9vw, 56px); }
+  }
+
+  @media (max-width: 420px) {
+    .wrap { padding: 0 18px; }
+    .film h1, .hero h1 { font-size: clamp(36px, 11vw, 56px) !important; }
+    .price-section h2 { font-size: clamp(72px, 28vw, 120px); }
+    footer .wrap { grid-template-columns: 1fr !important; }
+  }
 </style>
 </head>
 <body>
@@ -1300,13 +1428,25 @@
     <div class="wrap">
       <div class="head reveal">
         <div class="eye">06 · The companion app</div>
-        <h2 class="display">The brain of <i>the band.</i></h2>
-        <p>The app is where VertiBand thinks. It pairs, configures, runs the session, logs every angle, every stage, every session. Without it, the band is just a sensor. With it, you get therapy that gets smarter every run.</p>
+        <h2 class="display">The remote for <i>your band.</i></h2>
+        <p>The app pairs your VertiBand, starts each session, and shows every angle the band is tracking in real time. Ten languages. Chirp3-HD voice. A clinical note written the moment you finish.</p>
       </div>
       <div class="phones">
-        <div class="phone"><div class="notch"></div><img src="assets/photo-app-1.webp" alt="App pairing screen"><div class="tag">Pair the band</div></div>
-        <div class="phone"><div class="notch"></div><img src="assets/photo-app-2.png" alt="Session setup"><div class="tag">Configure the session</div></div>
-        <div class="phone ghost"><div class="notch"></div><div class="msg">IN&#8209;SESSION VIEW<br>COMING SOON</div><div class="tag">Track your progress</div></div>
+        <div class="phone">
+          <div class="notch"></div>
+          <img src="assets/app-shots/home.svg" alt="VertiBand home screen with session history and VertiScore trend">
+          <div class="tag">Your recovery, tracked</div>
+        </div>
+        <div class="phone">
+          <div class="notch"></div>
+          <img src="assets/app-shots/session.svg" alt="Live Epley session with live angle ring and hold timer">
+          <div class="tag">Live angle tracking</div>
+        </div>
+        <div class="phone">
+          <div class="notch"></div>
+          <img src="assets/app-shots/pair.svg" alt="Session complete with AI-written clinical note and recovery probability">
+          <div class="tag">AI clinical note</div>
+        </div>
       </div>
     </div>
   </section>
