@@ -1128,10 +1128,68 @@
     .price-section h2 { font-size: clamp(72px, 28vw, 120px); }
     footer .wrap { grid-template-columns: 1fr !important; }
   }
+
+  /* ────────── AURA ORB — lagging cursor halo ────────── */
+  .aura {
+    position: fixed; top: 0; left: 0; width: 600px; height: 600px;
+    border-radius: 50%; pointer-events: none; z-index: 1;
+    background: radial-gradient(circle, rgba(200,90,58,0.22) 0%, rgba(200,90,58,0.08) 35%, transparent 68%);
+    mix-blend-mode: plus-lighter;
+    transform: translate3d(-9999px, -9999px, 0);
+    will-change: transform;
+    transition: opacity 600ms var(--ease);
+  }
+  .aura.dark {
+    background: radial-gradient(circle, rgba(94,212,229,0.18) 0%, rgba(94,212,229,0.06) 35%, transparent 68%);
+    mix-blend-mode: screen;
+  }
+  @media (hover: none), (pointer: coarse) { .aura { display: none; } }
+
+  /* ────────── SCROLL PROGRESS RAIL ────────── */
+  .scroll-rail {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60;
+    background: transparent; pointer-events: none;
+  }
+  .scroll-rail .bar {
+    width: 0%; height: 100%;
+    background: linear-gradient(90deg, var(--signal), rgba(200,90,58,0.35));
+    transition: width 120ms var(--ease);
+    box-shadow: 0 0 14px rgba(200,90,58,0.45);
+  }
+
+  /* ────────── VELOCITY-REACTIVE MARQUEE ────────── */
+  .marquee .strip {
+    transition: transform 320ms var(--ease), letter-spacing 420ms var(--ease);
+    will-change: transform;
+  }
+
+  /* Character-by-character scramble wrappers: the script wraps each
+     character in a span that's repainted on reveal. Keep them invisible
+     until hit so layout stays tight. */
+  .eye .ch, .scramble .ch {
+    display: inline-block;
+    transition: opacity 200ms var(--ease);
+  }
+
+  /* Pin-scrub feature callouts on the device section */
+  .device .photo.pin-host { transform-origin: center; }
+  .device .feature-stack {
+    position: relative; min-height: 180px;
+  }
+  .device .feature-stack .callout {
+    position: absolute; inset: 0;
+    opacity: 0; transform: translateY(12px);
+    pointer-events: none;
+  }
+  .device .feature-stack .callout.on {
+    opacity: 1; transform: none; pointer-events: auto;
+  }
 </style>
 </head>
 <body>
 
+<div class="scroll-rail" aria-hidden="true"><div class="bar" id="scroll-rail-bar"></div></div>
+<div class="aura" id="aura" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"></div>
 
 <aside class="rail">
@@ -1695,6 +1753,7 @@
     const lenis = new Lenis({ duration: 1.1, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add((time) => lenis.raf(time * 1000));
+    window._lenis = lenis;
     gsap.ticker.lagSmoothing(0);
 
     if (reduced) return; // below here: motion
@@ -2159,6 +2218,178 @@
     }
     const T0 = performance.now() / 1000;
     draw();
+  })();
+
+  // ────────── AURA ORB + SCROLL RAIL + VELOCITY + SCRAMBLE + PIN ──────────
+  // Late-2025 editorial web motion: cursor-lag aura, top scroll progress
+  // rail, Lenis-velocity reactive marquees + hero h1 tracking, text
+  // scramble on section eyebrows, and a pin-scrub feature stack on the
+  // device section. All guarded by `prefers-reduced-motion`.
+  (function(){
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarse = matchMedia('(hover: none), (pointer: coarse)').matches;
+
+    // ────────── 1. Aura orb — rAF-lerped cursor halo ──────────
+    const aura = document.getElementById('aura');
+    if (aura && !coarse && !reduced) {
+      let tx = innerWidth / 2, ty = innerHeight / 2;
+      let x = tx, y = ty;
+      addEventListener('pointermove', (e) => { tx = e.clientX; ty = e.clientY; }, { passive: true });
+      addEventListener('pointerleave', () => { aura.style.opacity = '0'; });
+      addEventListener('pointerenter', () => { aura.style.opacity = '1'; });
+      (function tick(){
+        x += (tx - x) * 0.11;
+        y += (ty - y) * 0.11;
+        aura.style.transform = `translate3d(${x - 300}px, ${y - 300}px, 0)`;
+        requestAnimationFrame(tick);
+      })();
+      // Flip the blend mode when the aura is over a dark section.
+      const darkSections = document.querySelectorAll('.appshow, .film, .marquee:not(.paper)');
+      const ioAura = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting && e.intersectionRatio > 0.5) aura.classList.add('dark');
+        });
+      }, { threshold: [0, 0.5, 1] });
+      // Simpler: check on scroll what section the center of the aura is over.
+      addEventListener('scroll', () => {
+        const cy = y;
+        let onDark = false;
+        darkSections.forEach(s => {
+          const r = s.getBoundingClientRect();
+          if (r.top <= cy && r.bottom >= cy) onDark = true;
+        });
+        aura.classList.toggle('dark', onDark);
+      }, { passive: true });
+    }
+
+    // ────────── 2. Scroll progress rail ──────────
+    const railBar = document.getElementById('scroll-rail-bar');
+    if (railBar) {
+      const update = () => {
+        const h = document.documentElement;
+        const max = h.scrollHeight - h.clientHeight;
+        const pct = max > 0 ? (h.scrollTop / max) * 100 : 0;
+        railBar.style.width = pct.toFixed(2) + '%';
+      };
+      addEventListener('scroll', update, { passive: true });
+      update();
+    }
+
+    if (typeof gsap === 'undefined') return;
+
+    // ────────── 3. Scroll-velocity → marquee skew + hero tracking ──────
+    // Tap Lenis's velocity if exposed; otherwise compute from native scroll.
+    if (!reduced) {
+      const marqueeStrips = document.querySelectorAll('.marquee .strip');
+      const heroH1s = document.querySelectorAll('.film h1, .hero h1');
+      let velocity = 0;
+      if (window._lenis && typeof window._lenis.on === 'function') {
+        window._lenis.on('scroll', ({ velocity: v }) => {
+          velocity = v || 0;
+          applyVelocity();
+        });
+      } else {
+        let lastY = scrollY, lastT = performance.now();
+        addEventListener('scroll', () => {
+          const t = performance.now();
+          const dt = Math.max(1, t - lastT);
+          velocity = (scrollY - lastY) / dt * 16.67;
+          lastY = scrollY; lastT = t;
+          applyVelocity();
+        }, { passive: true });
+      }
+      function applyVelocity(){
+        const v = velocity;
+        const skew = Math.max(-8, Math.min(8, v * 0.35));
+        const track = Math.min(3.5, Math.abs(v) * 0.025);
+        marqueeStrips.forEach(el => {
+          gsap.to(el, { skewX: skew, duration: 0.45, ease: 'power3.out', overwrite: 'auto' });
+        });
+        heroH1s.forEach(el => {
+          gsap.to(el, { letterSpacing: `-${(0.03 - track * 0.008).toFixed(3)}em`, duration: 0.55, ease: 'power2.out', overwrite: 'auto' });
+        });
+      }
+    }
+
+    // ────────── 4. Text scramble on .eye eyebrows as they enter view ─
+    if (!reduced) {
+      const CHARS = '!<>-_\\/[]{}—=+*^?#________';
+      function scramble(el, finalText, duration = 650) {
+        let start = performance.now();
+        const len = finalText.length;
+        const queue = [];
+        for (let i = 0; i < len; i++) {
+          const from = ' ';
+          const to = finalText[i];
+          const fromStart = Math.floor(Math.random() * 10);
+          const fromEnd = fromStart + Math.floor(Math.random() * 20) + 4;
+          queue.push({ from, to, fromStart, fromEnd });
+        }
+        function tick(now){
+          const elapsed = now - start;
+          let out = '';
+          let complete = 0;
+          for (let i = 0; i < len; i++) {
+            const q = queue[i];
+            const localDur = q.fromEnd - q.fromStart;
+            const localT = (elapsed / (duration / 25)) - q.fromStart;
+            if (localT < 0) { out += q.from; }
+            else if (localT >= localDur) { complete++; out += q.to; }
+            else { out += CHARS[Math.floor(Math.random() * CHARS.length)]; }
+          }
+          el.textContent = out;
+          if (complete < len) requestAnimationFrame(tick);
+          else el.textContent = finalText;
+        }
+        requestAnimationFrame(tick);
+      }
+      document.querySelectorAll('.eye, .appshow .head .eye, .film .k').forEach(el => {
+        // Only scramble short label strings, and only with Latin ASCII
+        // content — avoids mangling numerals or non-ASCII unicode.
+        const txt = el.textContent.trim();
+        if (txt.length > 80 || !/^[\x20-\x7E]+$/.test(txt)) return;
+        el.dataset.finalText = txt;
+      });
+      const ioScram = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting && e.target.dataset.finalText) {
+            scramble(e.target, e.target.dataset.finalText);
+            ioScram.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.6 });
+      document.querySelectorAll('[data-final-text]').forEach(el => ioScram.observe(el));
+    }
+
+    // ────────── 5. Pin-scrub feature stack on .device photo ──────────
+    // When the device section enters view, pin the photo and scrub
+    // a rotating sub-headline in the spec area.
+    if (!reduced && typeof ScrollTrigger !== 'undefined') {
+      const devSection = document.querySelector('section.device');
+      const devPhoto = devSection && devSection.querySelector('.photo');
+      if (devPhoto && matchMedia('(min-width: 961px)').matches) {
+        ScrollTrigger.create({
+          trigger: devSection,
+          start: 'top 10%',
+          end: 'bottom 85%',
+          pin: devPhoto,
+          pinSpacing: false,
+          anticipatePin: 1,
+          pinType: 'transform',
+        });
+        // Subtle y-parallax on the photo while pinned
+        gsap.to(devPhoto.querySelector('img'), {
+          yPercent: -6,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: devSection,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.2,
+          },
+        });
+      }
+    }
   })();
 </script>
 
