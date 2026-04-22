@@ -53,7 +53,7 @@
   .rail .idx a.on::before { content: ""; position: absolute; left: -10px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--signal); }
   .rail .foot { font: 500 10px/1.4 var(--mono); letter-spacing: 0.1em; color: var(--fg-3); text-align: center; }
 
-  .page { margin-left: 72px; }
+  .page { margin-left: 0; }
 
   /* reveal-on-scroll (default visible; JS adds .pre to hide before reveal) */
   .reveal { transition: opacity 900ms var(--ease), transform 900ms var(--ease); }
@@ -933,20 +933,8 @@
   .compare tbody tr:hover td { background: rgba(29,44,56,0.03); }
   .compare tbody tr:hover .col-us { background: rgba(200,90,58,0.09); }
 
-  /* ────────── SCROLL-DRIVEN (CSS-native, non-conflicting with GSAP) ────────── */
-  @media (prefers-reduced-motion: no-preference) {
-    /* Page-wide reading progress bar, purely CSS scroll-timeline */
-    @supports (animation-timeline: scroll(root)) {
-      body::before {
-        content: ""; position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100;
-        background: linear-gradient(90deg, var(--signal), #F7D3B0);
-        transform-origin: 0 50%; transform: scaleX(0);
-        animation: read-progress linear both;
-        animation-timeline: scroll(root);
-      }
-      @keyframes read-progress { to { transform: scaleX(1); } }
-    }
-  }
+  /* (Duplicate CSS-native scroll progress bar removed; the JS-driven
+     .scroll-rail at the very top of the body already handles this.) */
 
   /* ────────── Hero canvas overlay ────────── */
   .pose-overlay {
@@ -1178,22 +1166,6 @@
 <div class="aura" id="aura" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"></div>
 
-<aside class="rail">
-  <div class="mark">V</div>
-  <nav class="idx">
-    <a href="#home" data-target="home" class="on">HOME</a>
-    <a href="#problem" data-target="problem">PROBLEM</a>
-    <a href="#device" data-target="device">DEVICE</a>
-    <a href="#method" data-target="method">METHOD</a>
-    <a href="#compare" data-target="compare">COMPARE</a>
-    <a href="#app" data-target="app">APP</a>
-    <a href="#evidence" data-target="evidence">EVIDENCE</a>
-    <a href="#team" data-target="team">TEAM</a>
-    <a href="#reserve" data-target="reserve">RESERVE</a>
-    <a href="#faq" data-target="faq">FAQ</a>
-  </nav>
-  <div class="foot">V—01</div>
-</aside>
 
 <div class="page">
 
