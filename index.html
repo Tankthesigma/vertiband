@@ -22,9 +22,71 @@
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.16/dist/lenis.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+/* Waitlist: local storage first (never loses a signup), optional POST
+ * to a collector endpoint if window.VERTIBAND_WAITLIST_URL is set.
+ * Admins can dump the local list by opening DevTools and running
+ *   copy(JSON.stringify(JSON.parse(localStorage.vertiband_waitlist||"[]"),null,2))
+ * or by visiting the page with #waitlist-export which downloads a CSV. */
+window.vbWaitlistSubmit = function(event, form) {
+  event.preventDefault();
+  const input = form.querySelector('input');
+  const button = form.querySelector('button');
+  const toast = document.getElementById('waitlist-toast');
+  const email = (input.value || '').trim().toLowerCase();
+  const emailOK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!emailOK) {
+    if (toast) { toast.textContent = "That doesn't look like a valid email."; toast.className = 'waitlist-toast err'; }
+    input.focus();
+    return false;
+  }
+  try {
+    const key = 'vertiband_waitlist';
+    const list = JSON.parse(localStorage.getItem(key) || '[]');
+    if (!list.some(r => r.email === email)) {
+      list.push({ email: email, ts: new Date().toISOString(), ua: navigator.userAgent.slice(0, 160) });
+      localStorage.setItem(key, JSON.stringify(list));
+    }
+    console.log('[waitlist] saved locally. total =', list.length);
+  } catch (e) { console.warn('[waitlist] local save failed', e); }
+
+  if (typeof window.VERTIBAND_WAITLIST_URL === 'string' && window.VERTIBAND_WAITLIST_URL) {
+    fetch(window.VERTIBAND_WAITLIST_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, ts: new Date().toISOString() })
+    }).catch(() => {});
+  }
+
+  button.textContent = 'Added. Thanks.';
+  button.disabled = true;
+  input.disabled = true;
+  if (toast) { toast.textContent = 'On the list. We will email you at launch.'; toast.className = 'waitlist-toast ok'; }
+  return false;
+};
+
+/* CSV export via #waitlist-export — admins paste the URL in the
+ * browser and a download drops. No UI exposed to users. */
+(function(){
+  if (location.hash !== '#waitlist-export') return;
+  try {
+    const list = JSON.parse(localStorage.getItem('vertiband_waitlist') || '[]');
+    const csv = 'email,ts,ua\n' + list.map(r =>
+      [r.email, r.ts, (r.ua||'').replace(/"/g,'""')].map(v => '"'+v+'"').join(',')
+    ).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'vertiband-waitlist.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch(e){ console.error(e); }
+})();
+</script>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--paper); color: var(--fg-1); font-family: var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden; max-width: 100%; }
+  html, body { margin: 0; background: var(--paper); color: var(--fg-1); font-family: var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden; max-width: 100%; overscroll-behavior-x: none; }
+  html { overflow-x: clip; }
+  .page { overflow-x: clip; }
   a { color: inherit; text-decoration: none; }
   img { display: block; max-width: 100%; }
   ::selection { background: var(--ink); color: var(--paper); }
@@ -359,6 +421,12 @@
     content: ""; width: 6px; height: 6px; border-radius: 999px;
     background: var(--signal); margin-top: 8px;
   }
+  .waitlist-toast {
+    font: 500 13px/1.5 var(--body); color: var(--fg-3);
+    margin: -30px 0 36px; min-height: 20px;
+  }
+  .waitlist-toast.ok { color: var(--success); }
+  .waitlist-toast.err { color: var(--danger); }
 
   /* ────────── GEMINI PROMPTS ────────── */
   .gem { padding: 150px 0 130px; background: var(--paper); }
@@ -1096,8 +1164,17 @@
     /* Waitlist section */
     .reserve-section .lede { font-size: 15px; margin-bottom: 28px; }
     .reserve-section .waitlist { flex-direction: column; gap: 10px; margin-bottom: 32px; }
-    .reserve-section .waitlist input { width: 100%; }
-    .reserve-section .waitlist button { width: 100%; padding: 16px 24px; }
+    .reserve-section .waitlist input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
+    }
+    .reserve-section .waitlist button {
+      width: 100%;
+      padding: 13px 20px;
+      font-size: 14px;
+    }
+    .waitlist-toast { font-size: 12px; }
 
     /* Team */
     .team .lede { margin-bottom: 44px; font-size: 15px; }
@@ -1566,10 +1643,11 @@
       <div class="eye">10 · Be first</div>
       <h2 class="display">The first batch ships <i>this year.</i></h2>
       <p class="lede">Drop your email and we will tell you the moment devices are in hand. No spam, no reseller middle, no marketing loop. One email at launch.</p>
-      <form class="waitlist" onsubmit="event.preventDefault(); const b=this.querySelector('button'); const e=this.querySelector('input'); b.textContent='Added. Thanks.'; e.disabled=true; b.disabled=true;" novalidate>
+      <form class="waitlist" onsubmit="return vbWaitlistSubmit(event, this);" novalidate>
         <input type="email" required placeholder="you@example.com" autocomplete="email" inputmode="email">
         <button type="submit">Join the waitlist</button>
       </form>
+      <div class="waitlist-toast" id="waitlist-toast" aria-live="polite"></div>
       <ul class="includes">
         <li>Device, USB&#8209;C cable, soft carrying case</li>
         <li>Free 2&#8209;day shipping inside the US</li>
