@@ -1071,6 +1071,16 @@
       clip-path: none !important;
       animation: none !important;
     }
+    /* The Namma-style curtain overlay is a separate absolutely-
+       positioned div that GSAP retracts on scroll. On mobile iOS Safari
+       the scroll-trigger sometimes never resolves (viewport height math
+       inside the Lenis wrapper), leaving the curtain permanently
+       covering the image (= "Fig 02 looks broken"). Hide on mobile. */
+    .media-curtain { display: none !important; }
+    /* Back to the desktop 4/5 ratio — the 1/1 I had tried was making
+       the contain-fit image look tiny on narrow screens. */
+    .device .photo { aspect-ratio: 4/5; }
+    .device .photo img { padding: 14%; }
 
     /* Validation cards: single column */
     .valid h2 { margin-bottom: 44px; }
