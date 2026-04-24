@@ -2181,15 +2181,19 @@
     draw();
   })();
 
-  // ────────── APP SHOWCASE: STACKED → FAN OUT ON SCROLL ──────────
-  // Three phones start overlapping at center (slight fan rotation,
-  // outers slightly smaller). As the user scrolls into the section, the
-  // outer two separate to their natural grid positions and rotation
-  // zeroes. Middle phone stays put. Non-pinned scroll-scrub so the page
-  // flow stays natural. Desktop-only; on mobile the section is already
-  // a horizontal swipe row so this would conflict.
+  // ────────── APP SHOWCASE: STACKED → FAN OUT (DESKTOP) ──────────
+  // Desktop: three phones start overlapping at center with a slight
+  // fan rotation; outer two separate to their grid positions as the
+  // section scrolls into view. Middle phone stays put. Scroll-scrubbed
+  // with scrub: 0.5 so Lenis's own smoothing owns the lerp.
+  //
+  // Mobile: ScrollTrigger.batch so each phone-col rises + fades as it
+  // enters view (via vertical scroll into the .phones row). Keeps the
+  // horizontal swipe UX untouched. Reverses on scroll-up so re-entry
+  // still feels alive.
   (function(){
     if (typeof gsap === 'undefined') return;
+
     gsap.matchMedia().add(
       { isDesktop: '(min-width: 721px) and (prefers-reduced-motion: no-preference)' },
       () => {
@@ -2212,6 +2216,25 @@
         })
           .to(cols[0], { xPercent: 0, rotate: 0, scale: 1 }, 0)
           .to(cols[2], { xPercent: 0, rotate: 0, scale: 1 }, 0);
+      }
+    );
+
+    gsap.matchMedia().add(
+      { isMobile: '(max-width: 720px) and (prefers-reduced-motion: no-preference)' },
+      () => {
+        gsap.set('.appshow .phone-col', { opacity: 0, y: 32 });
+        ScrollTrigger.batch('.appshow .phone-col', {
+          start: 'top 85%',
+          onEnter: (els) => gsap.to(els, {
+            opacity: 1, y: 0,
+            duration: 0.9, ease: 'power3.out',
+            stagger: 0.12, overwrite: 'auto',
+          }),
+          onLeaveBack: (els) => gsap.to(els, {
+            opacity: 0, y: 32,
+            duration: 0.4, ease: 'power2.in',
+          }),
+        });
       }
     );
   })();
