@@ -12,7 +12,7 @@
 <meta property="og:image" content="assets/hero-lifestyle.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="VertiBand · Precision vestibular therapy at home">
-<meta name="twitter:description" content="Stop guessing. Start healing. 1.9° mean angle error. $219 once. 10-year warranty.">
+<meta name="twitter:description" content="Stop guessing. Start healing. 1.9° mean angle error. 100 Hz tracking. 10-year warranty.">
 <meta name="twitter:image" content="assets/hero-lifestyle.png">
 <link rel="icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="%231D2C38"/><text x="50%25" y="56%25" text-anchor="middle" dominant-baseline="middle" font-family="Georgia,serif" font-style="italic" font-weight="500" font-size="40" fill="%23F7F1E8">V</text></svg>'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -314,29 +314,43 @@
   .card-v h4 { font: 400 22px/1.25 var(--display); margin: 0; letter-spacing: -0.015em; color: var(--ink); }
   .card-v p { font-size: 14px; line-height: 1.6; color: var(--fg-2); margin: 0; }
 
-  /* ────────── PRICE ────────── */
-  .price-section {
+  /* ────────── WAITLIST ────────── */
+  .reserve-section {
     padding: 150px 0 130px; background: var(--paper-2);
     border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
   }
-  .price-section .wrap { display: grid; grid-template-columns: 1.3fr 1fr; gap: 96px; align-items: center; }
-  .price-section h2 {
-    font-family: var(--display); font-weight: 300;
-    font-size: clamp(96px, 14vw, 220px); line-height: 0.92; letter-spacing: -0.04em;
-    margin: 0 0 28px; color: var(--ink);
+  .reserve-section .wrap { max-width: 780px; margin: 0 auto; }
+  .reserve-section h2 { margin: 16px 0 28px; }
+  .reserve-section .lede {
+    font-size: 17px; line-height: 1.6; color: var(--fg-2); margin: 0 0 36px; max-width: 560px;
   }
-  .price-section h2 sup { font-size: 0.28em; vertical-align: 0.7em; color: var(--fg-3); font-weight: 400; margin-right: 8px; }
-  .price-section h2 small {
-    font-size: 0.22em; color: var(--ink-2); font-weight: 300;
-    letter-spacing: 0; margin-left: 14px; font-style: italic;
+  .reserve-section .waitlist {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin: 0 0 44px; max-width: 560px;
   }
-  .price-section .sub { font-size: 17px; line-height: 1.6; color: var(--fg-2); margin: 0 0 44px; max-width: 480px; }
-  .price-section ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
-  .price-section ul li {
+  .reserve-section .waitlist input {
+    flex: 1 1 260px; min-width: 200px;
+    padding: 14px 18px; border-radius: 999px;
+    border: 1px solid var(--hair-2); background: var(--paper);
+    font: 400 15px/1 var(--body); color: var(--ink);
+    outline: none; transition: border-color 220ms var(--ease);
+  }
+  .reserve-section .waitlist input:focus { border-color: var(--ink); }
+  .reserve-section .waitlist input:disabled { color: var(--fg-3); }
+  .reserve-section .waitlist button {
+    padding: 14px 24px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
+    font: 500 14px/1 var(--body); letter-spacing: 0.02em;
+    transition: background 220ms var(--ease), border-color 220ms var(--ease);
+  }
+  .reserve-section .waitlist button:hover:not(:disabled) { background: var(--signal); border-color: var(--signal); }
+  .reserve-section .waitlist button:disabled { background: var(--success); border-color: var(--success); cursor: default; }
+  .reserve-section .includes { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+  .reserve-section .includes li {
     display: grid; grid-template-columns: 20px 1fr; gap: 14px;
     align-items: baseline; font-size: 15px; color: var(--fg-1);
   }
-  .price-section ul li::before {
+  .reserve-section .includes li::before {
     content: ""; width: 6px; height: 6px; border-radius: 999px;
     background: var(--signal); margin-top: 8px;
   }
@@ -806,15 +820,8 @@
   .lede .w { opacity: 0.35; transition: opacity 600ms var(--ease); }
   .lede.in .w { opacity: 1; }
 
-  /* Price-section huge number: slow glow pulse */
-  .price-section h2 { animation: price-pulse 6s ease-in-out infinite alternate; }
-  @keyframes price-pulse {
-    from { text-shadow: 0 0 0 rgba(200,90,58,0); }
-    to   { text-shadow: 0 0 30px rgba(200,90,58,0.10); }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    footer .word, .price-section h2 { animation: none; }
+    footer .word { animation: none; }
     .lede .w { opacity: 1; }
   }
 
@@ -969,7 +976,7 @@
     .rail { display: none; }
     .page { margin-left: 0; }
     .hero .grid, .problem .facts, .device .grid, .loop .stages,
-    .valid .list, .price-section .wrap, .gem .grid, footer .wrap,
+    .valid .list, .reserve-section .wrap, .gem .grid, footer .wrap,
     .team .grid, .faq .grid, .press .row {
       grid-template-columns: 1fr; gap: 32px;
     }
@@ -1005,7 +1012,7 @@
     .film .scroll-cue { display: none; }
 
     /* Sections: compress vertical rhythm */
-    .problem, .loop, .valid, .appshow, .price-section, .gem, .team, .faq {
+    .problem, .loop, .valid, .appshow, .reserve-section, .gem, .team, .faq {
       padding: 80px 0;
     }
     .device { padding: 72px 0; }
@@ -1071,10 +1078,11 @@
     .card-v { padding: 28px 24px 30px; }
     .card-v h4 { font-size: 20px; }
 
-    /* Price section */
-    .price-section .wrap { grid-template-columns: 1fr !important; gap: 40px; }
-    .price-section h2 { font-size: clamp(88px, 28vw, 160px); margin-bottom: 20px; }
-    .price-section .sub { font-size: 15px; margin-bottom: 28px; }
+    /* Waitlist section */
+    .reserve-section .lede { font-size: 15px; margin-bottom: 28px; }
+    .reserve-section .waitlist { flex-direction: column; gap: 10px; margin-bottom: 32px; }
+    .reserve-section .waitlist input { width: 100%; }
+    .reserve-section .waitlist button { width: 100%; padding: 16px 24px; }
 
     /* Team */
     .team .lede { margin-bottom: 44px; font-size: 15px; }
@@ -1113,7 +1121,6 @@
   @media (max-width: 420px) {
     .wrap { padding: 0 18px; }
     .film h1, .hero h1 { font-size: clamp(36px, 11vw, 56px) !important; }
-    .price-section h2 { font-size: clamp(72px, 28vw, 120px); }
     footer .wrap { grid-template-columns: 1fr !important; }
   }
 
@@ -1164,7 +1171,7 @@
     <a href="#app" data-target="app">APP</a>
     <a href="#evidence" data-target="evidence">EVIDENCE</a>
     <a href="#team" data-target="team">TEAM</a>
-    <a href="#reserve" data-target="reserve">RESERVE</a>
+    <a href="#reserve" data-target="reserve">WAITLIST</a>
     <a href="#faq" data-target="faq">FAQ</a>
   </nav>
   <div class="foot">V—01</div>
@@ -1199,14 +1206,14 @@
         <h1><span class="l1"><span>Stop guessing.</span></span><span class="l2"><span>Start <i>healing.</i></span></span></h1>
         <p class="lede">A home wearable that watches your head through the Epley maneuver and verifies each stage in real time. 1.9° mean angle error. 100 Hz tracking. One device. One purchase.</p>
         <div class="cta-row">
-          <a class="btn primary" href="#reserve">Reserve yours →</a>
+          <a class="btn primary" href="#reserve">Get notified at launch →</a>
         </div>
       </div>
       <div class="stats" aria-label="Key metrics">
         <div class="m"><div class="v" data-count="1.9" data-suffix="°" data-decimals="1">0°</div><div class="k">Mean angle error</div></div>
         <div class="m"><div class="v" data-count="100" data-suffix="Hz">0Hz</div><div class="k">IMU tracking</div></div>
         <div class="m"><div class="v" data-count="94" data-suffix="%">0%</div><div class="k">Stage accuracy</div></div>
-        <div class="m"><div class="v" data-count="219" data-prefix="$">$0</div><div class="k">One-time, 10-yr warranty</div></div>
+        <div class="m"><div class="v" data-count="10" data-suffix="yr">0yr</div><div class="k">Limited warranty</div></div>
       </div>
     </div>
 
@@ -1222,9 +1229,9 @@
         <h1>Stop guessing.<br>Start <span class="accent">healing.</span></h1>
         <p class="lede">VertiBand watches your head while you do the Epley maneuver, and tells you when you got it right. No clinic wait. No uncertainty. Just one device, one purchase, a calmer morning.</p>
         <div class="cta-row">
-          <a class="btn primary" href="#reserve">Reserve yours <span aria-hidden="true">→</span></a>
+          <a class="btn primary" href="#reserve">Get notified at launch <span aria-hidden="true">→</span></a>
         </div>
-        <div class="price"><b>$219</b> one&#8209;time · free shipping · 10&#8209;year warranty</div>
+        <div class="price"><b>V01</b> ships 2026 · free US shipping · 10&#8209;year limited warranty</div>
       </div>
       <div class="right" style="padding:0;">
         <div class="stage" style="border-radius:0; aspect-ratio:auto; height:100%; width:100%;">
@@ -1390,12 +1397,6 @@
             <td class="col-us val good">Unbox and begin</td>
           </tr>
           <tr>
-            <td>Cost per session</td>
-            <td class="val good">Free</td>
-            <td class="val no">$400+</td>
-            <td class="col-us val good">One-time $219</td>
-          </tr>
-          <tr>
             <td>Works for recurrence</td>
             <td class="val good">Repeatable</td>
             <td class="val no">New appointment</td>
@@ -1544,16 +1545,18 @@
     </div>
   </section>
 
-  <!-- PRICE -->
-  <section class="price-section" id="reserve" data-section="reserve">
+  <!-- WAITLIST (price removed for the pre-launch build) -->
+  <section class="reserve-section" id="reserve" data-section="reserve">
     <div class="wrap">
-      <div>
-        <div class="eye">10 · The offer</div>
-        <h2><sup>$</sup>219<small>once.</small></h2>
-        <p class="sub">No subscription. No upsell. One device, one purchase, one decade of warranty. If it does not help, return it.</p>
-      </div>
-      <ul>
-        <li>Device, USB&#8209;C cable, carrying case</li>
+      <div class="eye">10 · Be first</div>
+      <h2 class="display">The first batch ships <i>this year.</i></h2>
+      <p class="lede">Drop your email and we will tell you the moment devices are in hand. No spam, no reseller middle, no marketing loop. One email at launch.</p>
+      <form class="waitlist" onsubmit="event.preventDefault(); const b=this.querySelector('button'); const e=this.querySelector('input'); b.textContent='Added. Thanks.'; e.disabled=true; b.disabled=true;" novalidate>
+        <input type="email" required placeholder="you@example.com" autocomplete="email" inputmode="email">
+        <button type="submit">Join the waitlist</button>
+      </form>
+      <ul class="includes">
+        <li>Device, USB&#8209;C cable, soft carrying case</li>
         <li>Free 2&#8209;day shipping inside the US</li>
         <li>10&#8209;year limited warranty, no questions</li>
         <li>Companion app for iOS and Android, included</li>
@@ -1566,7 +1569,7 @@
   <section class="faq" id="faq" data-section="faq" data-chapter="11">
     <div class="wrap">
       <div class="eye">11 · Common questions</div>
-      <h2 class="display">What people ask before <i>they reserve.</i></h2>
+      <h2 class="display">What people ask before <i>they sign up.</i></h2>
       <div class="grid">
         <div class="lede-col">
           <p>If it's not here, email us and we'll add it. We answer every reasonable question personally, usually within a day.</p>
@@ -1622,7 +1625,7 @@
       </div>
       <div>
         <h5>Product</h5>
-        <ul><li><a href="#device">The device</a></li><li><a href="#app">The app</a></li><li><a href="#compare">Compare</a></li><li><a href="#reserve">Reserve</a></li></ul>
+        <ul><li><a href="#device">The device</a></li><li><a href="#app">The app</a></li><li><a href="#compare">Compare</a></li><li><a href="#reserve">Waitlist</a></li></ul>
       </div>
       <div>
         <h5>Science</h5>
