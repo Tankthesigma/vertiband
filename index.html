@@ -275,7 +275,12 @@
   .appshow .head { max-width: 860px; margin: 0 0 80px; }
   .appshow .head p { font-size: 17px; line-height: 1.6; color: var(--fg-d2); margin: 20px 0 0; }
   .phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; align-items: start; }
-  .phone-col { display: flex; flex-direction: column; gap: 18px; align-items: center; }
+  .phone-col {
+    display: flex; flex-direction: column; gap: 18px; align-items: center;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
   .phone {
     aspect-ratio: 390 / 844; width: 100%; background: #000; border-radius: 44px;
     border: 8px solid #000; overflow: hidden; position: relative;
@@ -1709,6 +1714,10 @@
     const lenis = new Lenis({ duration: 1.1, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add((time) => lenis.raf(time * 1000));
+    // Required with Lenis — GSAP's default lag compensation fights the
+    // smooth-scroll loop and produces the "rubber band" feel (worse on
+    // Safari where RAF jitter is higher). See Lenis discussion #366.
+    gsap.ticker.lagSmoothing(0);
     window._lenis = lenis;
     gsap.ticker.lagSmoothing(0);
 
@@ -2187,18 +2196,19 @@
         const cols = gsap.utils.toArray('.appshow .phone-col');
         if (cols.length !== 3) return;
 
-        gsap.set(cols[0], { xPercent:  108, rotate:  5, scale: 0.94, zIndex: 1 });
-        gsap.set(cols[1], { xPercent:    0, rotate:  0, scale: 1.00, zIndex: 3 });
-        gsap.set(cols[2], { xPercent: -108, rotate: -5, scale: 0.94, zIndex: 1 });
+        gsap.set(cols[0], { xPercent:  108, rotate:  5, scale: 0.94, zIndex: 1, force3D: true });
+        gsap.set(cols[1], { xPercent:    0, rotate:  0, scale: 1.00, zIndex: 3, force3D: true });
+        gsap.set(cols[2], { xPercent: -108, rotate: -5, scale: 0.94, zIndex: 1, force3D: true });
 
         gsap.timeline({
           scrollTrigger: {
             trigger: '.appshow .phones',
             start: 'top 80%',
             end:   'top 20%',
-            scrub: 1.2,
+            scrub: 0.5,
+            invalidateOnRefresh: true,
           },
-          defaults: { ease: 'none' },
+          defaults: { ease: 'none', force3D: true },
         })
           .to(cols[0], { xPercent: 0, rotate: 0, scale: 1 }, 0)
           .to(cols[2], { xPercent: 0, rotate: 0, scale: 1 }, 0);
