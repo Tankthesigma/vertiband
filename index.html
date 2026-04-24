@@ -2172,6 +2172,40 @@
     draw();
   })();
 
+  // ────────── APP SHOWCASE: STACKED → FAN OUT ON SCROLL ──────────
+  // Three phones start overlapping at center (slight fan rotation,
+  // outers slightly smaller). As the user scrolls into the section, the
+  // outer two separate to their natural grid positions and rotation
+  // zeroes. Middle phone stays put. Non-pinned scroll-scrub so the page
+  // flow stays natural. Desktop-only; on mobile the section is already
+  // a horizontal swipe row so this would conflict.
+  (function(){
+    if (typeof gsap === 'undefined') return;
+    gsap.matchMedia().add(
+      { isDesktop: '(min-width: 721px) and (prefers-reduced-motion: no-preference)' },
+      () => {
+        const cols = gsap.utils.toArray('.appshow .phone-col');
+        if (cols.length !== 3) return;
+
+        gsap.set(cols[0], { xPercent:  108, rotate:  5, scale: 0.94, zIndex: 1 });
+        gsap.set(cols[1], { xPercent:    0, rotate:  0, scale: 1.00, zIndex: 3 });
+        gsap.set(cols[2], { xPercent: -108, rotate: -5, scale: 0.94, zIndex: 1 });
+
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: '.appshow .phones',
+            start: 'top 80%',
+            end:   'top 20%',
+            scrub: 1.2,
+          },
+          defaults: { ease: 'none' },
+        })
+          .to(cols[0], { xPercent: 0, rotate: 0, scale: 1 }, 0)
+          .to(cols[2], { xPercent: 0, rotate: 0, scale: 1 }, 0);
+      }
+    );
+  })();
+
   // ────────── NAMMA-STYLE: HERO BLUR-TO-CLEAR + MEDIA CURTAIN ─────
   // Two moves pulled from studionamma.com that fit an editorial
   // clinical site:
